@@ -1,0 +1,138 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #ffffff; /* Clean white background */
+  --color-foreground: #475569; /* Professional gray text */
+  --color-card: #fafbfc; /* Sophisticated light blue-gray card background */
+  --color-card-foreground: #374151; /* Darker gray text for better contrast */
+  --color-popover: #ffffff; /* White popover background */
+  --color-popover-foreground: #475569; /* Popover text */
+  --color-primary: #059669; /* Hospital emerald green */
+  --color-primary-foreground: #ffffff; /* White text on primary */
+  --color-secondary: #10b981; /* Lighter emerald accent */
+  --color-secondary-foreground: #ffffff; /* White text on secondary */
+  --color-muted: #f8fafc; /* Very light blue-gray muted background */
+  --color-muted-foreground: #64748b; /* Medium gray muted text */
+  --color-accent: #10b981; /* Accent color */
+  --color-accent-foreground: #ffffff; /* White text on accent */
+  --color-destructive: #dc2626; /* Red destructive color */
+  --color-destructive-foreground: #ffffff; /* White text on destructive */
+  --color-border: #e2e8f0; /* Light gray border */
+  --color-input: #ffffff; /* White input background */
+  --color-ring: rgba(5, 150, 105, 0.5); /* Emerald ring with transparency */
+  --color-chart-1: #059669; /* #059669 */
+  --color-chart-2: #10b981; /* #10b981 */
+  --color-chart-3: #f1f5f9; /* #f1f5f9 */
+  --color-chart-4: #475569; /* #475569 */
+  --color-chart-5: #ffffff; /* #ffffff */
+  --radius: 0.5rem; /* 8px - Modern rounded corners */
+  --color-sidebar: #f8fafc; /* Light blue-gray sidebar background */
+  --color-sidebar-foreground: #475569; /* Sidebar text */
+  --color-sidebar-primary: #059669; /* Sidebar primary */
+  --color-sidebar-primary-foreground: #ffffff; /* Sidebar primary text */
+  --color-sidebar-accent: #10b981; /* Sidebar accent */
+  --color-sidebar-accent-foreground: #ffffff; /* Sidebar accent text */
+  --color-sidebar-border: #e2e8f0; /* Sidebar border */
+  --color-sidebar-ring: rgba(5, 150, 105, 0.5); /* Sidebar ring */
+}
+
+@theme dark {
+  --color-background: #0f172a;
+  --color-foreground: #f8fafc;
+  --color-card: #1e293b;
+  --color-card-foreground: #f8fafc;
+  --color-popover: #1e293b;
+  --color-popover-foreground: #f8fafc;
+  --color-primary: #10b981; /* Lighter emerald for dark mode */
+  --color-primary-foreground: #0f172a;
+  --color-secondary: #334155;
+  --color-secondary-foreground: #f8fafc;
+  --color-muted: #334155;
+  --color-muted-foreground: #94a3b8;
+  --color-accent: #10b981; /* Emerald accent for dark mode */
+  --color-accent-foreground: #0f172a;
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #f8fafc;
+  --color-border: #334155;
+  --color-input: #334155;
+  --color-ring: rgba(16, 185, 129, 0.5);
+  --color-chart-1: #10b981;
+  --color-chart-2: #34d399;
+  --color-chart-3: #fbbf24;
+  --color-chart-4: #a78bfa;
+  --color-chart-5: #f97316;
+  --color-sidebar: #1e293b;
+  --color-sidebar-foreground: #f8fafc;
+  --color-sidebar-primary: #10b981;
+  --color-sidebar-primary-foreground: #0f172a;
+  --color-sidebar-accent: #334155;
+  --color-sidebar-accent-foreground: #f8fafc;
+  --color-sidebar-border: #334155;
+  --color-sidebar-ring: rgba(16, 185, 129, 0.5);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  
+  body {
+    @apply bg-background text-gray-900;
+  }
+}
+
+@layer utilities {
+  /* Added smooth scroll behavior and custom animations for landing page */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Fade-in animation for scroll-triggered elements */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in {
+    animation: fadeInUp 0.8s ease-out forwards;
+  }
+
+  /* Floating animation for hero elements */
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  /* Hover effects for cards */
+  .hover-lift {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+
+  /* Gradient text effect */
+  .gradient-text {
+    background: linear-gradient(135deg, #3b82f6, #10b981);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
