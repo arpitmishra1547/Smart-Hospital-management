@@ -1,52 +1,47 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { sendOtpToPhone } from "@/lib/firebase"
 import { 
   Phone, 
   User, 
-  Calendar, 
-  MapPin, 
-  Shield, 
   Heart, 
   AlertTriangle,
   UserPlus,
-  FileText,
-  CreditCard,
   ArrowLeft,
-  CheckCircle
+  CheckCircle,
+  Loader2
 } from "lucide-react"
 
 export default function PatientLoginPage() {
   const [step, setStep] = useState("login") // login, otp, registration
   const [mobileNumber, setMobileNumber] = useState("")
   const [otp, setOtp] = useState(["", "", "", "", "", ""])
-  const [isNewUser, setIsNewUser] = useState(false)
+  const confirmationRef = useRef(null)
+  const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     fullName: "",
-    dateOfBirth: "",
+    age: "",
     gender: "",
-    address: "",
-    abhaId: "",
-    bloodGroup: "",
-    allergies: "",
-    existingConditions: "",
-    emergencyContactName: "",
-    emergencyContactRelation: "",
-    emergencyContactMobile: "",
-    insurancePolicyNo: "",
-    insuranceProvider: ""
+    mobileNumber: "",
+    problemDescription: "",
+    specializedDoctor: ""
   })
 
-  const handleSendOTP = () => {
-    if (mobileNumber.length === 10) {
+  const handleSendOTP = async () => {
+    if (mobileNumber.length !== 10) return
+    const phone = `+91${mobileNumber}`
+    try {
+      setLoading(true)
+      const result = await sendOtpToPhone(phone)
+      confirmationRef.current = result
       setStep("otp")
-      // Simulate OTP sent
-      setTimeout(() => {
-        setIsNewUser(true)
-        setStep("registration")
-      }, 2000)
+    } catch (err) {
+      alert(err.message || "Failed to send OTP")
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -62,26 +57,75 @@ export default function PatientLoginPage() {
     }
   }
 
-  const handleVerifyOTP = () => {
-    const otpString = otp.join("")
-    if (otpString.length === 6) {
-      // Simulate OTP verification
-      setTimeout(() => {
-        if (isNewUser) {
-          setStep("registration")
-        } else {
-          // Redirect to dashboard
-          window.location.href = "/patient/dashboard"
-        }
-      }, 1000)
+  const handleVerifyOTP = async () => {
+    const code = otp.join("")
+    if (code.length !== 6 || !confirmationRef.current) return
+    
+    setLoading(true)
+    try {
+      await confirmationRef.current.confirm(code)
+      
+      // Check if patient exists in MongoDB
+      const response = await fetch('/api/patients', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'checkMobile',
+          mobileNumber: mobileNumber
+        })
+      });
+
+      const result = await response.json();
+      
+      if (result.exists) {
+        // Patient exists, redirect to dashboard with data
+        localStorage.setItem('patientData', JSON.stringify(result.patient));
+        window.location.href = "/patient/dashboard";
+      } else {
+        // New patient, go to registration
+        setFormData(prev => ({ ...prev, mobileNumber: mobileNumber }));
+        setStep("registration");
+      }
+    } catch (err) {
+      alert(err.message || "Invalid OTP")
+    } finally {
+      setLoading(false)
     }
   }
 
-  const handleRegistration = () => {
-    // Save registration data
-    console.log("Registration data:", formData)
-    // Redirect to dashboard
-    window.location.href = "/patient/dashboard"
+  const handleRegistration = async () => {
+    setLoading(true)
+    try {
+      // Save patient data to MongoDB
+      const response = await fetch('/api/patients', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'createPatient',
+          mobileNumber: mobileNumber,
+          patientData: formData
+        })
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        // Save to localStorage and redirect to dashboard
+        localStorage.setItem('patientData', JSON.stringify(result.patient));
+        window.location.href = "/patient/dashboard";
+      } else {
+        alert("Failed to create patient profile");
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      alert("Failed to create patient profile");
+    } finally {
+      setLoading(false)
+    }
   }
 
   const updateFormData = (field, value) => {
@@ -144,11 +188,20 @@ export default function PatientLoginPage() {
 
                 <Button 
                   onClick={handleSendOTP}
-                  disabled={mobileNumber.length !== 10}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-lg font-semibold"
+                  disabled={mobileNumber.length !== 10 || loading}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-lg font-semibold disabled:opacity-50"
                 >
-                  <Phone className="w-5 h-5 mr-2" />
-                  Send OTP
+                  {loading ? (
+                    <div className="flex items-center justify-center">
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Sending OTP...
+                    </div>
+                  ) : (
+                    <>
+                      <Phone className="w-5 h-5 mr-2" />
+                      Send OTP
+                    </>
+                  )}
                 </Button>
 
                 <div className="text-center">
@@ -196,10 +249,17 @@ export default function PatientLoginPage() {
 
               <Button 
                 onClick={handleVerifyOTP}
-                disabled={otp.join("").length !== 6}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-lg font-semibold"
+                disabled={otp.join("").length !== 6 || loading}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-lg font-semibold disabled:opacity-50"
               >
-                Verify & Continue
+                {loading ? (
+                  <div className="flex items-center justify-center">
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Verifying...
+                  </div>
+                ) : (
+                  "Verify & Continue"
+                )}
               </Button>
 
               <div className="text-center">
@@ -247,29 +307,33 @@ export default function PatientLoginPage() {
                   
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
                       <input
                         type="text"
                         required
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         value={formData.fullName}
                         onChange={(e) => updateFormData("fullName", e.target.value)}
+                        placeholder="Enter your full name"
                       />
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Date of Birth</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Age *</label>
                       <input
-                        type="date"
+                        type="number"
                         required
+                        min="1"
+                        max="120"
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        value={formData.dateOfBirth}
-                        onChange={(e) => updateFormData("dateOfBirth", e.target.value)}
+                        value={formData.age}
+                        onChange={(e) => updateFormData("age", e.target.value)}
+                        placeholder="Enter your age"
                       />
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Gender</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Gender *</label>
                       <select
                         required
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -284,26 +348,16 @@ export default function PatientLoginPage() {
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">ABHA ID / Aadhaar (Optional)</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Mobile Number *</label>
                       <input
-                        type="text"
-                        placeholder="For EHR compliance"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        value={formData.abhaId}
-                        onChange={(e) => updateFormData("abhaId", e.target.value)}
+                        type="tel"
+                        required
+                        disabled
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
+                        value={formData.mobileNumber}
+                        placeholder="Mobile number (auto-filled)"
                       />
                     </div>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
-                    <textarea
-                      required
-                      rows={3}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      value={formData.address}
-                      onChange={(e) => updateFormData("address", e.target.value)}
-                    />
                   </div>
                 </div>
 
@@ -314,124 +368,36 @@ export default function PatientLoginPage() {
                     Medical Information
                   </h3>
                   
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Blood Group</label>
-                      <select
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        value={formData.bloodGroup}
-                        onChange={(e) => updateFormData("bloodGroup", e.target.value)}
-                      >
-                        <option value="">Select Blood Group</option>
-                        <option value="A+">A+</option>
-                        <option value="A-">A-</option>
-                        <option value="B+">B+</option>
-                        <option value="B-">B-</option>
-                        <option value="AB+">AB+</option>
-                        <option value="AB-">AB-</option>
-                        <option value="O+">O+</option>
-                        <option value="O-">O-</option>
-                      </select>
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Allergies</label>
-                      <input
-                        type="text"
-                        placeholder="e.g., Penicillin, Nuts"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        value={formData.allergies}
-                        onChange={(e) => updateFormData("allergies", e.target.value)}
-                      />
-                    </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Problem / Symptoms Description *</label>
+                    <textarea
+                      required
+                      rows={4}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      value={formData.problemDescription}
+                      onChange={(e) => updateFormData("problemDescription", e.target.value)}
+                      placeholder="Describe your symptoms or health concerns..."
+                    />
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Existing Medical Conditions</label>
-                    <textarea
-                      rows={3}
-                      placeholder="e.g., Diabetes, Hypertension"
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Specialized Doctor *</label>
+                    <select
+                      required
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      value={formData.existingConditions}
-                      onChange={(e) => updateFormData("existingConditions", e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                {/* Emergency Contact */}
-                <div className="space-y-6">
-                  <h3 className="text-xl font-semibold text-gray-900 flex items-center">
-                    <AlertTriangle className="w-5 h-5 mr-2 text-orange-600" />
-                    Emergency Contact
-                  </h3>
-                  
-                  <div className="grid md:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Contact Name</label>
-                      <input
-                        type="text"
-                        required
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        value={formData.emergencyContactName}
-                        onChange={(e) => updateFormData("emergencyContactName", e.target.value)}
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Relation</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="e.g., Spouse, Parent"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        value={formData.emergencyContactRelation}
-                        onChange={(e) => updateFormData("emergencyContactRelation", e.target.value)}
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Mobile Number</label>
-                      <input
-                        type="tel"
-                        required
-                        placeholder="10-digit number"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        value={formData.emergencyContactMobile}
-                        onChange={(e) => updateFormData("emergencyContactMobile", e.target.value)}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Insurance Information */}
-                <div className="space-y-6">
-                  <h3 className="text-xl font-semibold text-gray-900 flex items-center">
-                    <CreditCard className="w-5 h-5 mr-2 text-green-600" />
-                    Insurance Information (Optional)
-                  </h3>
-                  
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Policy Number</label>
-                      <input
-                        type="text"
-                        placeholder="Insurance policy number"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        value={formData.insurancePolicyNo}
-                        onChange={(e) => updateFormData("insurancePolicyNo", e.target.value)}
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Insurance Provider</label>
-                      <input
-                        type="text"
-                        placeholder="e.g., Max Bupa, Star Health"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        value={formData.insuranceProvider}
-                        onChange={(e) => updateFormData("insuranceProvider", e.target.value)}
-                      />
-                    </div>
+                      value={formData.specializedDoctor}
+                      onChange={(e) => updateFormData("specializedDoctor", e.target.value)}
+                    >
+                      <option value="">Select Specialized Doctor</option>
+                      <option value="Dr. Sarah Johnson - Cardiology">Dr. Sarah Johnson - Cardiology</option>
+                      <option value="Dr. Michael Chen - Dermatology">Dr. Michael Chen - Dermatology</option>
+                      <option value="Dr. Emily Rodriguez - Orthopedics">Dr. Emily Rodriguez - Orthopedics</option>
+                      <option value="Dr. James Wilson - General Medicine">Dr. James Wilson - General Medicine</option>
+                      <option value="Dr. Lisa Thompson - Pediatrics">Dr. Lisa Thompson - Pediatrics</option>
+                      <option value="Dr. Robert Kim - Neurology">Dr. Robert Kim - Neurology</option>
+                      <option value="Dr. Maria Garcia - Gynecology">Dr. Maria Garcia - Gynecology</option>
+                      <option value="Dr. David Lee - Psychiatry">Dr. David Lee - Psychiatry</option>
+                    </select>
                   </div>
                 </div>
 
@@ -439,10 +405,20 @@ export default function PatientLoginPage() {
                 <div className="pt-6">
                   <Button 
                     type="submit"
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 text-lg font-semibold"
+                    disabled={loading}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 text-lg font-semibold disabled:opacity-50"
                   >
-                    <UserPlus className="w-5 h-5 mr-2" />
-                    Save & Continue
+                    {loading ? (
+                      <div className="flex items-center justify-center">
+                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                        Creating Profile...
+                      </div>
+                    ) : (
+                      <>
+                        <UserPlus className="w-5 h-5 mr-2" />
+                        Save & Continue
+                      </>
+                    )}
                   </Button>
                 </div>
               </form>

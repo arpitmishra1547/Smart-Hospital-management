@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { 
@@ -20,15 +20,84 @@ import {
   ChevronRight,
   Star,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Edit,
+  Save,
+  X,
+  Loader2
 } from "lucide-react"
 
 export default function PatientDashboard() {
   const [activeTab, setActiveTab] = useState("dashboard")
   const [symptomInput, setSymptomInput] = useState("")
   const [showSymptomChat, setShowSymptomChat] = useState(false)
+  const [patientData, setPatientData] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [editing, setEditing] = useState(false)
+  const [editForm, setEditForm] = useState({})
+  const [saving, setSaving] = useState(false)
 
-  // Mock data
+  useEffect(() => {
+    // Get patient data from localStorage or redirect to login
+    const storedData = localStorage.getItem('patientData')
+    if (storedData) {
+      try {
+        const data = JSON.parse(storedData)
+        setPatientData(data)
+        setEditForm(data)
+      } catch (error) {
+        console.error('Error parsing patient data:', error)
+        window.location.href = "/patient/login"
+      }
+    } else {
+      window.location.href = "/patient/login"
+    }
+    setLoading(false)
+  }, [])
+
+  const handleSaveProfile = async () => {
+    setSaving(true)
+    try {
+      const response = await fetch('/api/patients', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'updatePatient',
+          mobileNumber: patientData.mobileNumber,
+          patientData: editForm
+        })
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        setPatientData(editForm)
+        localStorage.setItem('patientData', JSON.stringify(editForm))
+        setEditing(false)
+        alert("Profile updated successfully!")
+      } else {
+        alert("Failed to update profile");
+      }
+    } catch (error) {
+      console.error('Update error:', error);
+      alert("Failed to update profile");
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setEditForm(patientData)
+    setEditing(false)
+  }
+
+  const updateEditForm = (field, value) => {
+    setEditForm(prev => ({ ...prev, [field]: value }))
+  }
+
+  // Mock data for other sections
   const currentToken = {
     number: "A-042",
     department: "Cardiology",
@@ -114,6 +183,34 @@ export default function PatientDashboard() {
     }
   }
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Loading your dashboard...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!patientData) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
+          <p className="text-gray-600">Patient data not found. Please login again.</p>
+          <Button 
+            onClick={() => window.location.href = "/patient/login"}
+            className="mt-4"
+          >
+            Go to Login
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
       {/* Header */}
@@ -126,12 +223,12 @@ export default function PatientDashboard() {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900">Patient Dashboard</h1>
-                <p className="text-sm text-gray-600">Welcome back, John Doe</p>
+                <p className="text-sm text-gray-700">Welcome back, {patientData.fullName}</p>
               </div>
             </div>
             
             <div className="flex items-center space-x-4">
-              <button className="relative p-2 text-gray-600 hover:text-gray-900">
+              <button className="relative p-2 text-gray-700 hover:text-gray-900">
                 <Bell className="w-6 h-6" />
                 {notifications.filter(n => !n.read).length > 0 && (
                   <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
@@ -156,7 +253,7 @@ export default function PatientDashboard() {
             {/* Current Token Card */}
             <Card className="backdrop-blur-sm bg-white/80 border-0 shadow-xl">
               <CardHeader className="pb-4">
-                <CardTitle className="flex items-center text-xl">
+                <CardTitle className="flex items-center text-xl text-gray-900">
                   <Clock className="w-5 h-5 mr-2 text-blue-600" />
                   Current Token
                 </CardTitle>
@@ -239,14 +336,14 @@ export default function PatientDashboard() {
                       <div className="flex justify-between items-start mb-2">
                         <div>
                           <h4 className="font-semibold text-gray-900">{record.department}</h4>
-                          <p className="text-sm text-gray-600">{record.doctor}</p>
+                          <p className="text-sm text-gray-700">{record.doctor}</p>
                         </div>
                         <span className="text-sm text-gray-500">{record.date}</span>
                       </div>
                       <div className="mb-2">
-                        <p className="text-sm text-gray-700"><span className="font-medium">Diagnosis:</span> {record.diagnosis}</p>
+                        <p className="text-sm text-gray-800"><span className="font-medium">Diagnosis:</span> {record.diagnosis}</p>
                       </div>
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm text-gray-800">
                         <span className="font-medium">Prescription:</span> {record.prescription}
                       </div>
                     </div>
@@ -313,40 +410,146 @@ export default function PatientDashboard() {
             {/* Profile Card */}
             <Card className="backdrop-blur-sm bg-white/80 border-0 shadow-xl">
               <CardHeader className="pb-4">
-                <CardTitle className="flex items-center text-xl">
-                  <User className="w-5 h-5 mr-2 text-blue-600" />
-                  Profile
+                <CardTitle className="flex items-center justify-between text-xl">
+                  <div className="flex items-center">
+                    <User className="w-5 h-5 mr-2 text-blue-600" />
+                    Profile
+                  </div>
+                  {!editing && (
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setEditing(true)}
+                    >
+                      <Edit className="w-4 h-4 mr-1" />
+                      Edit
+                    </Button>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <div className="text-center">
-                    <div className="w-20 h-20 bg-blue-100 rounded-full mx-auto mb-3 flex items-center justify-center">
-                      <User className="w-10 h-10 text-blue-600" />
+                {editing ? (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                      <input
+                        type="text"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        value={editForm.fullName || ''}
+                        onChange={(e) => updateEditForm("fullName", e.target.value)}
+                      />
                     </div>
-                    <h3 className="font-semibold text-gray-900">John Doe</h3>
-                    <p className="text-sm text-gray-600">Patient ID: P-001234</p>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Age</label>
+                      <input
+                        type="number"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        value={editForm.age || ''}
+                        onChange={(e) => updateEditForm("age", e.target.value)}
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Gender</label>
+                      <select
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        value={editForm.gender || ''}
+                        onChange={(e) => updateEditForm("gender", e.target.value)}
+                      >
+                        <option value="">Select Gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Problem Description</label>
+                      <textarea
+                        rows={3}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        value={editForm.problemDescription || ''}
+                        onChange={(e) => updateEditForm("problemDescription", e.target.value)}
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Specialized Doctor</label>
+                      <select
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        value={editForm.specializedDoctor || ''}
+                        onChange={(e) => updateEditForm("specializedDoctor", e.target.value)}
+                      >
+                        <option value="">Select Specialized Doctor</option>
+                        <option value="Dr. Sarah Johnson - Cardiology">Dr. Sarah Johnson - Cardiology</option>
+                        <option value="Dr. Michael Chen - Dermatology">Dr. Michael Chen - Dermatology</option>
+                        <option value="Dr. Emily Rodriguez - Orthopedics">Dr. Emily Rodriguez - Orthopedics</option>
+                        <option value="Dr. James Wilson - General Medicine">Dr. James Wilson - General Medicine</option>
+                        <option value="Dr. Lisa Thompson - Pediatrics">Dr. Lisa Thompson - Pediatrics</option>
+                        <option value="Dr. Robert Kim - Neurology">Dr. Robert Kim - Neurology</option>
+                        <option value="Dr. Maria Garcia - Gynecology">Dr. Maria Garcia - Gynecology</option>
+                        <option value="Dr. David Lee - Psychiatry">Dr. David Lee - Psychiatry</option>
+                      </select>
+                    </div>
+                    
+                    <div className="flex space-x-2 pt-2">
+                      <Button 
+                        onClick={handleSaveProfile}
+                        disabled={saving}
+                        className="flex-1 bg-blue-600 hover:bg-blue-700"
+                      >
+                        {saving ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <Save className="w-4 h-4 mr-2" />
+                        )}
+                        {saving ? 'Saving...' : 'Save'}
+                      </Button>
+                      <Button 
+                        variant="outline"
+                        onClick={handleCancelEdit}
+                        className="flex-1"
+                      >
+                        <X className="w-4 h-4 mr-2" />
+                        Cancel
+                      </Button>
+                    </div>
                   </div>
-                  
-                  <div className="space-y-3">
-                    <div className="flex items-center text-sm">
-                      <Heart className="w-4 h-4 mr-2 text-red-500" />
-                      <span className="text-gray-700">Blood Group: O+</span>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="text-center">
+                      <div className="w-20 h-20 bg-blue-100 rounded-full mx-auto mb-3 flex items-center justify-center">
+                        <User className="w-10 h-10 text-blue-600" />
+                      </div>
+                      <h3 className="font-semibold text-gray-900">{patientData.fullName}</h3>
+                      <p className="text-sm text-gray-600">Patient ID: P-{patientData.mobileNumber.slice(-4)}</p>
                     </div>
-                    <div className="flex items-center text-sm">
-                      <MapPin className="w-4 h-4 mr-2 text-gray-500" />
-                      <span className="text-gray-700">Mumbai, Maharashtra</span>
-                    </div>
-                    <div className="flex items-center text-sm">
-                      <Phone className="w-4 h-4 mr-2 text-gray-500" />
-                      <span className="text-gray-700">+91 98765 43210</span>
+                    
+                    <div className="space-y-3">
+                      <div className="flex items-center text-sm">
+                        <User className="w-4 h-4 mr-2 text-blue-500" />
+                        <span className="text-gray-700">Age: {patientData.age} years</span>
+                      </div>
+                      <div className="flex items-center text-sm">
+                        <User className="w-4 h-4 mr-2 text-blue-500" />
+                        <span className="text-gray-700">Gender: {patientData.gender}</span>
+                      </div>
+                      <div className="flex items-center text-sm">
+                        <Phone className="w-4 h-4 mr-2 text-gray-500" />
+                        <span className="text-gray-700">+91 {patientData.mobileNumber}</span>
+                      </div>
+                      <div className="flex items-center text-sm">
+                        <Heart className="w-4 h-4 mr-2 text-red-500" />
+                        <span className="text-gray-700">Problem: {patientData.problemDescription}</span>
+                      </div>
+                      <div className="flex items-center text-sm">
+                        <User className="w-4 h-4 mr-2 text-green-500" />
+                        <span className="text-gray-700">Doctor: {patientData.specializedDoctor}</span>
+                      </div>
                     </div>
                   </div>
-                  
-                  <Button variant="outline" className="w-full">
-                    Edit Profile
-                  </Button>
-                </div>
+                )}
               </CardContent>
             </Card>
 
@@ -370,7 +573,7 @@ export default function PatientDashboard() {
                       }`}
                     >
                       <p className="text-sm text-gray-800 mb-1">{notification.message}</p>
-                      <p className="text-xs text-gray-500">{notification.time}</p>
+                      <p className="text-xs text-gray-700">{notification.time}</p>
                     </div>
                   ))}
                   <Button variant="outline" className="w-full">
@@ -395,7 +598,7 @@ export default function PatientDashboard() {
                       <div className="flex justify-between items-start mb-2">
                         <div>
                           <h4 className="font-medium text-gray-900">{appointment.department}</h4>
-                          <p className="text-sm text-gray-600">{appointment.doctor}</p>
+                          <p className="text-sm text-gray-700">{appointment.doctor}</p>
                         </div>
                         <span className={`px-2 py-1 text-xs rounded-full ${
                           appointment.status === 'confirmed' 
@@ -405,7 +608,7 @@ export default function PatientDashboard() {
                           {appointment.status}
                         </span>
                       </div>
-                      <div className="flex items-center text-sm text-gray-600">
+                      <div className="flex items-center text-sm text-gray-800">
                         <Calendar className="w-4 h-4 mr-1" />
                         {appointment.date} at {appointment.time}
                       </div>

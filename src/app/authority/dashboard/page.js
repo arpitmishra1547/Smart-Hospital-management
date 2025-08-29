@@ -64,7 +64,7 @@ export default function AuthorityDashboardPage() {
               <h1 className="text-3xl md:text-4xl font-bold gradient-text">Authority Dashboard</h1>
               <p className="text-gray-600 mt-1">Smart overview of hospital operations</p>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-gray-900">
               <StatCard title="Total Patients" value="830" subtitle="↑ 18% vs last month" icon={Users2} color="blue" />
               <StatCard title="Total Doctors" value="120" subtitle="Active 104" icon={Stethoscope} color="green" />
               <StatCard title="Beds Occupied" value={`${bedStats.occupied}/${bedStats.total}`} subtitle={`${occupancy}% occupancy`} icon={BedDouble} color="gray" />

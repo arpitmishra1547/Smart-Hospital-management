@@ -1,36 +1,167 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Smart Hospital Management System
+
+A modern, full-stack hospital management system built with Next.js, MongoDB, and Firebase authentication.
+
+## Features
+
+### Patient Management
+- **Mobile-based Login**: Secure OTP verification using Firebase
+- **Smart Registration Flow**: 
+  - New patients are redirected to registration after OTP verification
+  - Existing patients are automatically logged into their dashboard
+- **Patient Dashboard**: Modern, responsive interface displaying patient information
+- **Profile Management**: Edit and update patient profiles with real-time MongoDB updates
+
+### Database Structure
+The system uses MongoDB Atlas with the following collections:
+- `patients_profile` - Stores complete patient information
+- `patients_mobileNumbers` - Tracks registered mobile numbers for quick lookups
+- `doctors_list` - Specialized doctor information (with fallback to default list)
+
+### Technical Stack
+- **Frontend**: Next.js 15, React 19, Tailwind CSS
+- **Backend**: Next.js API Routes
+- **Database**: MongoDB Atlas
+- **Authentication**: Firebase Phone Authentication
+- **UI Components**: Custom component library with Radix UI primitives
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+- Node.js 18+ 
+- MongoDB Atlas account
+- Firebase project
 
+### Installation
+
+1. Clone the repository:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <repository-url>
+cd my-app
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install dependencies:
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+3. Set up environment variables:
+Create a `.env.local` file with:
+```env
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/?retryWrites=true&w=majority
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. Configure Firebase:
+Update `src/lib/firebase.js` with your Firebase configuration.
 
-## Learn More
+5. Run the development server:
+```bash
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+## System Flow
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Patient Login Flow
+1. **Mobile Number Input**: Patient enters their mobile number
+2. **OTP Verification**: Firebase sends and verifies OTP
+3. **Database Check**: System checks if mobile number exists in MongoDB
+4. **Routing Decision**:
+   - **Existing Patient**: Redirected to dashboard with profile data
+   - **New Patient**: Redirected to registration form
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Registration Process
+1. **Form Collection**: Gathers required patient information:
+   - Full Name
+   - Age
+   - Gender
+   - Mobile Number (auto-filled)
+   - Problem/Symptoms Description
+   - Specialized Doctor Selection
+2. **Data Storage**: Saves to MongoDB in both collections
+3. **Dashboard Access**: Redirects to patient dashboard
 
-## Deploy on Vercel
+### Dashboard Features
+- **Profile Display**: Shows all patient information in a clean, modern UI
+- **Profile Editing**: Inline editing with real-time updates
+- **Appointment Management**: Book and view appointments
+- **Medical Records**: Access to medical history
+- **AI Symptom Checker**: Basic symptom analysis
+- **Notifications**: Real-time updates and alerts
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## API Endpoints
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### `/api/patients`
+- `POST` - Handle patient operations:
+  - `action: 'checkMobile'` - Check if mobile number exists
+  - `action: 'createPatient'` - Create new patient profile
+  - `action: 'updatePatient'` - Update existing patient profile
+
+### `/api/doctors`
+- `GET` - Retrieve list of specialized doctors
+
+## Database Schema
+
+### Patient Profile
+```javascript
+{
+  fullName: String,
+  age: Number,
+  gender: String,
+  mobileNumber: String,
+  problemDescription: String,
+  specializedDoctor: String,
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
+### Mobile Numbers Collection
+```javascript
+{
+  mobileNumber: String,
+  createdAt: Date
+}
+```
+
+### Doctors Collection
+```javascript
+{
+  name: String,
+  specialization: String,
+  department: String
+}
+```
+
+## Security Features
+- Firebase Phone Authentication
+- MongoDB injection protection
+- Input validation and sanitization
+- Secure API endpoints
+
+## UI/UX Features
+- Responsive design for all devices
+- Modern gradient backgrounds
+- Smooth animations and transitions
+- Loading states and error handling
+- Intuitive navigation and user flow
+
+## Future Enhancements
+- Doctor dashboard and management
+- Appointment scheduling system
+- Medical record management
+- Prescription management
+- Payment integration
+- Multi-language support
+
+## Contributing
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+## License
+This project is licensed under the MIT License.
+
+## Support
+For support and questions, please open an issue in the repository.
