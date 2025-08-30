@@ -2,9 +2,9 @@
 export const config = {
   // Google Maps API Configuration
   googleMaps: {
-    apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'DEMO_KEY',
-    libraries: ['geocoding', 'geometry'],
-    defaultCenter: { lat: 20.5937, lng: 78.9629 }, // Center of India
+    apiKey: "AIzaSyAFUQG0Ms77ONGqE666a7AduW5Iy1C_Zr0", // 🔴 Replace with env variable later
+    libraries: ['places', 'geometry'], // 'geocoding' is handled through Geocoder service
+    defaultCenter: { lat: 23.251797808801957, lng: 77.46620424743277 }, // Center of India
     defaultZoom: 15,
     enabled: true // Enable for geocoding functionality
   },
