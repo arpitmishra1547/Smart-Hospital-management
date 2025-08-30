@@ -1,4 +1,9 @@
 @import "tailwindcss";
+@layer utilities {
+  .glow-blue-400 {
+    text-shadow: 0 0 10px rgba(96, 165, 250, 0.5);
+  }
+}
 
 @theme {
   --color-background: #ffffff; /* Clean white background */

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import LocationTracker from "@/components/patient/LocationTracker"
 import { 
   Clock, 
   Calendar, 
@@ -250,6 +251,9 @@ export default function PatientDashboard() {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Left Column - Main Dashboard */}
           <div className="lg:col-span-2 space-y-8">
+            {/* Location Tracker */}
+            <LocationTracker patientData={patientData} />
+
             {/* Current Token Card */}
             <Card className="backdrop-blur-sm bg-white/80 border-0 shadow-xl">
               <CardHeader className="pb-4">

@@ -7,28 +7,18 @@ import { sendOtpToPhone } from "@/lib/firebase"
 import { 
   Phone, 
   User, 
-  Heart, 
-  AlertTriangle,
-  UserPlus,
   ArrowLeft,
   CheckCircle,
   Loader2
 } from "lucide-react"
 
 export default function PatientLoginPage() {
-  const [step, setStep] = useState("login") // login, otp, registration
+  const [step, setStep] = useState("login") // login, otp
   const [mobileNumber, setMobileNumber] = useState("")
   const [otp, setOtp] = useState(["", "", "", "", "", ""])
   const confirmationRef = useRef(null)
   const [loading, setLoading] = useState(false)
-  const [formData, setFormData] = useState({
-    fullName: "",
-    age: "",
-    gender: "",
-    mobileNumber: "",
-    problemDescription: "",
-    specializedDoctor: ""
-  })
+
 
   const handleSendOTP = async () => {
     if (mobileNumber.length !== 10) return
@@ -84,9 +74,10 @@ export default function PatientLoginPage() {
         localStorage.setItem('patientData', JSON.stringify(result.patient));
         window.location.href = "/patient/dashboard";
       } else {
-        // New patient, go to registration
-        setFormData(prev => ({ ...prev, mobileNumber: mobileNumber }));
-        setStep("registration");
+        // New patient, redirect to comprehensive registration page
+        // Store mobile number in localStorage for pre-filling
+        localStorage.setItem('pendingMobileNumber', mobileNumber);
+        window.location.href = "/patient/register";
       }
     } catch (err) {
       alert(err.message || "Invalid OTP")
@@ -95,42 +86,7 @@ export default function PatientLoginPage() {
     }
   }
 
-  const handleRegistration = async () => {
-    setLoading(true)
-    try {
-      // Save patient data to MongoDB
-      const response = await fetch('/api/patients', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          action: 'createPatient',
-          mobileNumber: mobileNumber,
-          patientData: formData
-        })
-      });
 
-      const result = await response.json();
-      
-      if (result.success) {
-        // Save to localStorage and redirect to dashboard
-        localStorage.setItem('patientData', JSON.stringify(result.patient));
-        window.location.href = "/patient/dashboard";
-      } else {
-        alert("Failed to create patient profile");
-      }
-    } catch (error) {
-      console.error('Registration error:', error);
-      alert("Failed to create patient profile");
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const updateFormData = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
-  }
 
   if (step === "login") {
     return (
@@ -285,149 +241,7 @@ export default function PatientLoginPage() {
     )
   }
 
-  if (step === "registration") {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 p-4">
-        <div className="max-w-4xl mx-auto">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Complete Your Profile</h1>
-            <p className="text-gray-600">Help us provide you with better healthcare</p>
-          </div>
 
-          <Card className="backdrop-blur-sm bg-white/80 border-0 shadow-xl">
-            <CardContent className="p-8">
-              <form onSubmit={(e) => { e.preventDefault(); handleRegistration(); }} className="space-y-8">
-                {/* Personal Information */}
-                <div className="space-y-6">
-                  <h3 className="text-xl font-semibold text-gray-900 flex items-center">
-                    <User className="w-5 h-5 mr-2 text-blue-600" />
-                    Personal Information
-                  </h3>
-                  
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
-                      <input
-                        type="text"
-                        required
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        value={formData.fullName}
-                        onChange={(e) => updateFormData("fullName", e.target.value)}
-                        placeholder="Enter your full name"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Age *</label>
-                      <input
-                        type="number"
-                        required
-                        min="1"
-                        max="120"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        value={formData.age}
-                        onChange={(e) => updateFormData("age", e.target.value)}
-                        placeholder="Enter your age"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Gender *</label>
-                      <select
-                        required
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        value={formData.gender}
-                        onChange={(e) => updateFormData("gender", e.target.value)}
-                      >
-                        <option value="">Select Gender</option>
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
-                        <option value="other">Other</option>
-                      </select>
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Mobile Number *</label>
-                      <input
-                        type="tel"
-                        required
-                        disabled
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
-                        value={formData.mobileNumber}
-                        placeholder="Mobile number (auto-filled)"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Medical Information */}
-                <div className="space-y-6">
-                  <h3 className="text-xl font-semibold text-gray-900 flex items-center">
-                    <Heart className="w-5 h-5 mr-2 text-red-600" />
-                    Medical Information
-                  </h3>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Problem / Symptoms Description *</label>
-                    <textarea
-                      required
-                      rows={4}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      value={formData.problemDescription}
-                      onChange={(e) => updateFormData("problemDescription", e.target.value)}
-                      placeholder="Describe your symptoms or health concerns..."
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Specialized Doctor *</label>
-                    <select
-                      required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      value={formData.specializedDoctor}
-                      onChange={(e) => updateFormData("specializedDoctor", e.target.value)}
-                    >
-                      <option value="">Select Specialized Doctor</option>
-                      <option value="Dr. Sarah Johnson - Cardiology">Dr. Sarah Johnson - Cardiology</option>
-                      <option value="Dr. Michael Chen - Dermatology">Dr. Michael Chen - Dermatology</option>
-                      <option value="Dr. Emily Rodriguez - Orthopedics">Dr. Emily Rodriguez - Orthopedics</option>
-                      <option value="Dr. James Wilson - General Medicine">Dr. James Wilson - General Medicine</option>
-                      <option value="Dr. Lisa Thompson - Pediatrics">Dr. Lisa Thompson - Pediatrics</option>
-                      <option value="Dr. Robert Kim - Neurology">Dr. Robert Kim - Neurology</option>
-                      <option value="Dr. Maria Garcia - Gynecology">Dr. Maria Garcia - Gynecology</option>
-                      <option value="Dr. David Lee - Psychiatry">Dr. David Lee - Psychiatry</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Submit Button */}
-                <div className="pt-6">
-                  <Button 
-                    type="submit"
-                    disabled={loading}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 text-lg font-semibold disabled:opacity-50"
-                  >
-                    {loading ? (
-                      <div className="flex items-center justify-center">
-                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                        Creating Profile...
-                      </div>
-                    ) : (
-                      <>
-                        <UserPlus className="w-5 h-5 mr-2" />
-                        Save & Continue
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    )
-  }
 
   return null
 }
