@@ -29,6 +29,8 @@ export default function LocationTracker({ patientData }) {
   const [tokenData, setTokenData] = useState(null)
   const [generatingToken, setGeneratingToken] = useState(false)
   const [showMap, setShowMap] = useState(false)
+  const [locationPermission, setLocationPermission] = useState(null)
+  const [showLocationPrompt, setShowLocationPrompt] = useState(false)
   
   const locationInterval = useRef(null)
   const mapRef = useRef(null)
@@ -138,26 +140,30 @@ export default function LocationTracker({ patientData }) {
         }
       },
              (error) => {
-         let errorMessage = 'Unknown error'
-         
-         switch (error.code) {
-           case error.PERMISSION_DENIED:
-             errorMessage = 'Location permission denied. Please enable location access.'
-             break
-           case error.POSITION_UNAVAILABLE:
-             errorMessage = 'Location information unavailable. Please try again.'
-             break
-           case error.TIMEOUT:
-             errorMessage = 'Location request timed out. Please try again.'
-             break
-           default:
-             errorMessage = error.message || 'Failed to get location'
-         }
-         
-         setLocationError(errorMessage)
-         setIsTracking(false)
-         console.error('Location error:', error)
-       },
+        let errorMessage = 'Unknown error'
+        
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = 'Location permission denied. Please enable location access in your browser settings.'
+            break
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = 'Location information unavailable. Please check your GPS/location services.'
+            break
+          case error.TIMEOUT:
+            errorMessage = 'Location request timed out. Please try again.'
+            break
+          default:
+            errorMessage = error.message || 'Failed to get location. Please try again.'
+        }
+        
+        setLocationError(errorMessage)
+        setIsTracking(false)
+        console.error('Location error:', {
+          code: error.code,
+          message: error.message,
+          type: error.constructor.name
+        })
+      },
       {
         enableHighAccuracy: true,
         timeout: 10000,
@@ -166,8 +172,43 @@ export default function LocationTracker({ patientData }) {
     )
   }
 
+  // Check location permission
+  const checkLocationPermission = async () => {
+    if (!navigator.geolocation) {
+      setLocationError("Geolocation is not supported by this browser")
+      return false
+    }
+
+    if (!navigator.permissions) {
+      // Fallback for browsers without permissions API
+      return true
+    }
+
+    try {
+      const permission = await navigator.permissions.query({ name: 'geolocation' })
+      setLocationPermission(permission.state)
+      
+      if (permission.state === 'denied') {
+        setShowLocationPrompt(true)
+        return false
+      }
+      
+      return permission.state === 'granted' || permission.state === 'prompt'
+    } catch (error) {
+      console.log('Permission API not available, proceeding with geolocation request')
+      return true
+    }
+  }
+
+  // Request location permission
+  const requestLocationPermission = () => {
+    setShowLocationPrompt(false)
+    setLocationError("")
+    startLocationTracking()
+  }
+
   // Start continuous location tracking
-  const startLocationTracking = () => {
+  const startLocationTracking = async () => {
     if (!navigator.geolocation) {
       setLocationError("Geolocation is not supported by this browser")
       return
@@ -175,6 +216,12 @@ export default function LocationTracker({ patientData }) {
 
     if (!patientData?.hospitalCoordinates) {
       setLocationError("Hospital coordinates not found. Please complete registration first.")
+      return
+    }
+
+    // Check permission first
+    const hasPermission = await checkLocationPermission()
+    if (!hasPermission && locationPermission === 'denied') {
       return
     }
 
@@ -210,8 +257,29 @@ export default function LocationTracker({ patientData }) {
           }
         },
                  (error) => {
-           console.error('Location tracking error:', error.message || error)
-           setLocationError(`Location tracking error: ${error.message || 'Unknown error'}`)
+           let errorMessage = 'Unknown error'
+           
+           switch (error.code) {
+             case error.PERMISSION_DENIED:
+               errorMessage = 'Location permission denied. Please enable location access in your browser settings and refresh the page.'
+               break
+             case error.POSITION_UNAVAILABLE:
+               errorMessage = 'Location information unavailable. Please check your GPS/location services.'
+               break
+             case error.TIMEOUT:
+               errorMessage = 'Location request timed out. Please try again.'
+               break
+             default:
+               errorMessage = error.message || 'Failed to get location. Please try again.'
+           }
+           
+           setLocationError(errorMessage)
+           setIsTracking(false)
+           console.error('Location tracking error:', {
+             code: error.code,
+             message: error.message,
+             type: error.constructor.name
+           })
          },
         {
           enableHighAccuracy: true,
@@ -407,6 +475,78 @@ export default function LocationTracker({ patientData }) {
     )
   }
 
+  // Show existing token if patient already has one
+  if (patientData?.tokenNumber && patientData?.tokenStatus === "Token Generated") {
+    return (
+      <Card className="backdrop-blur-sm bg-white/80 border-0 shadow-xl">
+        <CardHeader>
+          <CardTitle className="flex items-center text-xl text-green-600">
+            <CheckCircle className="w-6 h-6 mr-2" />
+            Your Current Token
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="bg-gradient-to-r from-green-500 to-blue-500 rounded-xl p-6 text-white text-center">
+            <div className="text-4xl font-bold mb-2">{patientData.tokenNumber}</div>
+            <p className="text-green-100 text-lg mb-4">
+              {patientData.department || 'General'} • {patientData.hospitalName || 'Hospital'}
+            </p>
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center justify-center">
+                <User className="w-4 h-4 mr-2" />
+                <span>{patientData.fullName}</span>
+              </div>
+              <div className="flex items-center justify-center">
+                <Clock className="w-4 h-4 mr-2" />
+                <span>Token Status: Active</span>
+              </div>
+              <div className="flex items-center justify-center">
+                <MapPin className="w-4 h-4 mr-2" />
+                <span>Please proceed to hospital reception</span>
+              </div>
+            </div>
+          </div>
+          <div className="mt-4 text-center text-sm text-gray-600">
+            Show this token number at the hospital reception desk.
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // Show registration prompt if hospital coordinates are missing
+  if (!patientData?.hospitalCoordinates) {
+    return (
+      <Card className="backdrop-blur-sm bg-white/80 border-0 shadow-xl">
+        <CardHeader>
+          <CardTitle className="flex items-center text-xl">
+            <AlertCircle className="w-5 h-5 mr-2 text-orange-600" />
+            Registration Incomplete
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="text-center py-6">
+          <div className="space-y-4">
+            <div className="w-16 h-16 bg-orange-100 rounded-full mx-auto flex items-center justify-center">
+              <MapPin className="w-8 h-8 text-orange-600" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-2">Hospital Location Missing</h3>
+              <p className="text-gray-600 text-sm mb-4">
+                Your registration is incomplete. Hospital coordinates are required for location-based token generation.
+              </p>
+            </div>
+            <Button 
+              onClick={() => window.location.href = "/patient/register"}
+              className="bg-orange-600 hover:bg-orange-700"
+            >
+              Complete Registration
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <div className="space-y-6">
       {/* Location Status Card */}
@@ -525,6 +665,41 @@ export default function LocationTracker({ patientData }) {
               <div className="flex items-center">
                 <AlertCircle className="w-4 h-4 text-red-600 mr-2" />
                 <span className="text-red-800 text-sm">{locationError}</span>
+              </div>
+            </div>
+          )}
+
+          {showLocationPrompt && (
+            <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+              <div className="flex items-start space-x-3">
+                <AlertCircle className="w-5 h-5 text-orange-600 mt-0.5" />
+                <div className="flex-1">
+                  <h4 className="font-medium text-orange-800 mb-2">Location Access Required</h4>
+                  <p className="text-sm text-orange-700 mb-3">
+                    Location access is currently blocked. To enable automatic token generation when you're near the hospital, please:
+                  </p>
+                  <ol className="text-sm text-orange-700 mb-4 space-y-1">
+                    <li>1. Click the location icon 📍 in your browser's address bar</li>
+                    <li>2. Select "Allow" for location access</li>
+                    <li>3. Click "Try Again" below</li>
+                  </ol>
+                  <div className="flex space-x-2">
+                    <Button 
+                      onClick={requestLocationPermission}
+                      size="sm"
+                      className="bg-orange-600 hover:bg-orange-700"
+                    >
+                      Try Again
+                    </Button>
+                    <Button 
+                      onClick={() => setShowLocationPrompt(false)}
+                      variant="outline"
+                      size="sm"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
           )}

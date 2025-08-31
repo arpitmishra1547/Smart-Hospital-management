@@ -1,7 +1,15 @@
 import { MongoClient } from 'mongodb';
 
 const uri = "mongodb+srv://arpitmishra1547:9977006842@hospital-management.f8holwi.mongodb.net/?retryWrites=true&w=majority&appName=hospital-management";
-const options = {};
+const options = {
+  tls: true,
+  tlsAllowInvalidCertificates: false,
+  tlsAllowInvalidHostnames: false,
+  serverSelectionTimeoutMS: 5000,
+  connectTimeoutMS: 10000,
+  maxPoolSize: 10,
+  minPoolSize: 5,
+};
 
 let client;
 let clientPromise;
