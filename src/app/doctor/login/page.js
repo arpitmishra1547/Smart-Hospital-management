@@ -26,12 +26,29 @@ export default function DoctorLoginPage() {
     setIsLoading(true)
     setError("")
 
-    // Simulate authentication
-    setTimeout(() => {
+    try {
+      const response = await fetch('/api/doctor/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ doctorId: doctorId.trim() })
+      })
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        // Store doctor info in localStorage for session
+        localStorage.setItem('doctorInfo', JSON.stringify(data.doctor))
+        // Redirect to doctor dashboard
+        window.location.href = "/doctor/dashboard"
+      } else {
+        setError(data.message || "Login failed")
+      }
+    } catch (error) {
+      console.error('Login error:', error)
+      setError("Network error. Please try again.")
+    } finally {
       setIsLoading(false)
-      // Redirect to doctor dashboard
-      window.location.href = "/doctor/dashboard"
-    }, 1500)
+    }
   }
 
   return (

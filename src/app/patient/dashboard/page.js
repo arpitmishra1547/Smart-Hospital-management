@@ -28,7 +28,8 @@ import {
   CheckCircle, 
   AlertCircle, 
   Loader2,
-  FileText
+  FileText,
+  RefreshCw
 } from "lucide-react";
 
 export default function PatientDashboard() {
@@ -167,24 +168,40 @@ export default function PatientDashboard() {
     },
   ]);
 
-  const medicalRecords = [
-    {
-      id: 1,
-      date: "2024-01-10",
-      department: "General Medicine",
-      doctor: "Dr. James Wilson",
-      diagnosis: "Upper Respiratory Infection",
-      prescription: "Azithromycin 500mg, Paracetamol 500mg",
-    },
-    {
-      id: 2,
-      date: "2024-01-05",
-      department: "Cardiology",
-      doctor: "Dr. Sarah Johnson",
-      diagnosis: "Hypertension",
-      prescription: "Amlodipine 5mg, Losartan 50mg",
-    },
-  ];
+  const [medicalRecords, setMedicalRecords] = useState([])
+  const [loadingHistory, setLoadingHistory] = useState(false)
+
+  const fetchMedicalHistory = async () => {
+    if (!patientData?.patientId) return
+    
+    setLoadingHistory(true)
+    try {
+      const response = await fetch(`/api/patients/history?patientId=${encodeURIComponent(patientData.patientId)}`)
+      const data = await response.json()
+      
+      if (data.success) {
+        setMedicalRecords(data.prescriptions.map(prescription => ({
+          id: prescription._id,
+          date: new Date(prescription.createdAt).toISOString().split('T')[0],
+          department: prescription.department,
+          doctor: prescription.doctorName,
+          diagnosis: prescription.prescription.diagnosis,
+          prescription: prescription.prescription.medicines.map(med => `${med.name} ${med.dosage} - ${med.duration}`).join(', '),
+          symptoms: prescription.prescription.symptoms,
+          notes: prescription.prescription.notes,
+          tokenNumber: prescription.tokenNumber
+        })))
+      }
+    } catch (error) {
+      console.error('Failed to fetch medical history:', error)
+    } finally {
+      setLoadingHistory(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchMedicalHistory()
+  }, [patientData])
 
   // Function to generate token for appointment
   const generateToken = (appointment) => {
@@ -577,9 +594,9 @@ export default function PatientDashboard() {
                         }
                       >
                         <option value="">Select Gender</option>
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
-                        <option value="other">Other</option>
+                        <option key="male" value="male">Male</option>
+                        <option key="female" value="female">Female</option>
+                        <option key="other" value="other">Other</option>
                       </select>
                     </div>
                     <div>
@@ -838,22 +855,22 @@ export default function PatientDashboard() {
                         required
                       >
                         <option value="">Select Department *</option>
-                        <option value="General Medicine (Physician) – fever, BP, diabetes, general illness">General Medicine (Physician) – fever, BP, diabetes, general illness</option>
-                        <option value="General Surgery – minor operations, surgical issues">General Surgery – minor operations, surgical issues</option>
-                        <option value="Orthopedics – bones, fractures, back pain, joints">Orthopedics – bones, fractures, back pain, joints</option>
-                        <option value="Cardiology – heart, chest pain, BP issues">Cardiology – heart, chest pain, BP issues</option>
-                        <option value="Neurology – headache, stroke, epilepsy, nerve problems">Neurology – headache, stroke, epilepsy, nerve problems</option>
-                        <option value="ENT (Ear, Nose, Throat) – ear pain, throat infection, sinus">ENT (Ear, Nose, Throat) – ear pain, throat infection, sinus</option>
-                        <option value="Ophthalmology (Eye) – eye checkup, vision problems">Ophthalmology (Eye) – eye checkup, vision problems</option>
-                        <option value="Dermatology (Skin) – skin, hair, nail issues">Dermatology (Skin) – skin, hair, nail issues</option>
-                        <option value="Gynecology & Obstetrics (Women's health) – pregnancy, periods, fertility">Gynecology & Obstetrics (Women's health) – pregnancy, periods, fertility</option>
-                        <option value="Pediatrics – child health, vaccinations">Pediatrics – child health, vaccinations</option>
-                        <option value="Psychiatry – mental health, stress, depression">Psychiatry – mental health, stress, depression</option>
-                        <option value="Dentistry – teeth, gums, oral care">Dentistry – teeth, gums, oral care</option>
-                        <option value="Pulmonology (Chest/Respiratory) – cough, asthma, breathing problems">Pulmonology (Chest/Respiratory) – cough, asthma, breathing problems</option>
-                        <option value="Gastroenterology – stomach, liver, digestion issues">Gastroenterology – stomach, liver, digestion issues</option>
-                        <option value="Nephrology – kidney, urine problems">Nephrology – kidney, urine problems</option>
-                        <option value="Urology – urinary & male reproductive health">Urology – urinary & male reproductive health</option>
+                        <option key="general-medicine" value="General Medicine (Physician) – fever, BP, diabetes, general illness">General Medicine (Physician) – fever, BP, diabetes, general illness</option>
+                        <option key="general-surgery" value="General Surgery – minor operations, surgical issues">General Surgery – minor operations, surgical issues</option>
+                        <option key="orthopedics" value="Orthopedics – bones, fractures, back pain, joints">Orthopedics – bones, fractures, back pain, joints</option>
+                        <option key="cardiology" value="Cardiology – heart, chest pain, BP issues">Cardiology – heart, chest pain, BP issues</option>
+                        <option key="neurology" value="Neurology – headache, stroke, epilepsy, nerve problems">Neurology – headache, stroke, epilepsy, nerve problems</option>
+                        <option key="ent" value="ENT (Ear, Nose, Throat) – ear pain, throat infection, sinus">ENT (Ear, Nose, Throat) – ear pain, throat infection, sinus</option>
+                        <option key="ophthalmology" value="Ophthalmology (Eye) – eye checkup, vision problems">Ophthalmology (Eye) – eye checkup, vision problems</option>
+                        <option key="dermatology" value="Dermatology (Skin) – skin, hair, nail issues">Dermatology (Skin) – skin, hair, nail issues</option>
+                        <option key="gynecology" value="Gynecology & Obstetrics (Women's health) – pregnancy, periods, fertility">Gynecology & Obstetrics (Women's health) – pregnancy, periods, fertility</option>
+                        <option key="pediatrics" value="Pediatrics – child health, vaccinations">Pediatrics – child health, vaccinations</option>
+                        <option key="psychiatry" value="Psychiatry – mental health, stress, depression">Psychiatry – mental health, stress, depression</option>
+                        <option key="dentistry" value="Dentistry – teeth, gums, oral care">Dentistry – teeth, gums, oral care</option>
+                        <option key="pulmonology" value="Pulmonology (Chest/Respiratory) – cough, asthma, breathing problems">Pulmonology (Chest/Respiratory) – cough, asthma, breathing problems</option>
+                        <option key="gastroenterology" value="Gastroenterology – stomach, liver, digestion issues">Gastroenterology – stomach, liver, digestion issues</option>
+                        <option key="nephrology" value="Nephrology – kidney, urine problems">Nephrology – kidney, urine problems</option>
+                        <option key="urology" value="Urology – urinary & male reproductive health">Urology – urinary & male reproductive health</option>
                       </select>
                     </div>
                     <div>
@@ -891,40 +908,87 @@ export default function PatientDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {medicalRecords.map((record) => (
-                    <div
-                      key={record.id}
-                      className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
-                    >
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <h4 className="font-semibold text-gray-900">
-                            {record.department}
-                          </h4>
-                          <p className="text-sm text-gray-700">
-                            {record.doctor}
+                  {loadingHistory ? (
+                    <div className="text-center py-6">
+                      <Loader2 className="w-8 h-8 text-blue-600 animate-spin mx-auto mb-2" />
+                      <p className="text-gray-600">Loading medical history...</p>
+                    </div>
+                  ) : medicalRecords.length === 0 ? (
+                    <div className="text-center py-6 text-gray-500">
+                      <FileText className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                      <p>No medical records found</p>
+                      <p className="text-sm">Your prescriptions will appear here after doctor consultations</p>
+                    </div>
+                  ) : (
+                    medicalRecords.map((record) => (
+                      <div
+                        key={record.id}
+                        className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                      >
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <h4 className="font-semibold text-gray-900">
+                              {record.department}
+                            </h4>
+                            <p className="text-sm text-gray-700">
+                              {record.doctor}
+                            </p>
+                            {record.tokenNumber && (
+                              <p className="text-xs text-blue-600 font-mono">
+                                Token: {record.tokenNumber}
+                              </p>
+                            )}
+                          </div>
+                          <span className="text-sm text-gray-500">
+                            {record.date}
+                          </span>
+                        </div>
+                        {record.symptoms && (
+                          <div className="mb-2">
+                            <p className="text-sm text-gray-800">
+                              <span className="font-medium">Symptoms:</span>{" "}
+                              {record.symptoms}
+                            </p>
+                          </div>
+                        )}
+                        <div className="mb-2">
+                          <p className="text-sm text-gray-800">
+                            <span className="font-medium">Diagnosis:</span>{" "}
+                            {record.diagnosis}
                           </p>
                         </div>
-                        <span className="text-sm text-gray-500">
-                          {record.date}
-                        </span>
+                        {record.prescription && (
+                          <div className="mb-2">
+                            <p className="text-sm text-gray-800">
+                              <span className="font-medium">Prescription:</span>{" "}
+                              {record.prescription}
+                            </p>
+                          </div>
+                        )}
+                        {record.notes && (
+                          <div className="text-sm text-gray-800">
+                            <span className="font-medium">Notes:</span>{" "}
+                            {record.notes}
+                          </div>
+                        )}
                       </div>
-                      <div className="mb-2">
-                        <p className="text-sm text-gray-800">
-                          <span className="font-medium">Diagnosis:</span>{" "}
-                          {record.diagnosis}
-                        </p>
-                      </div>
-                      <div className="text-sm text-gray-800">
-                        <span className="font-medium">Prescription:</span>{" "}
-                        {record.prescription}
-                      </div>
-                    </div>
-                  ))}
-                  <Button variant="outline" className="w-full">
-                    View All Records
-                    <ChevronRight className="w-4 h-4 ml-2" />
-                  </Button>
+                    ))
+                  )}
+                  {medicalRecords.length > 0 && (
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={fetchMedicalHistory}
+                      disabled={loadingHistory}
+                    >
+                      {loadingHistory ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                      )}
+                      Refresh Records
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -1045,9 +1109,9 @@ export default function PatientDashboard() {
                         }
                       >
                         <option value="">Select Gender</option>
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
-                        <option value="other">Other</option>
+                        <option key="male" value="male">Male</option>
+                        <option key="female" value="female">Female</option>
+                        <option key="other" value="other">Other</option>
                       </select>
                     </div>
                     <div>

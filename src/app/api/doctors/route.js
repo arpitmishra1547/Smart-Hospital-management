@@ -1,51 +1,146 @@
 import { NextResponse } from 'next/server';
 import clientPromise from '@/lib/mongodb';
 
-export async function GET() {
-  try {
-    const client = await clientPromise;
-    const db = client.db("hospital-management");
+function generateDoctorId(sequenceNumber) {
+  return `DR-${String(sequenceNumber).padStart(5, '0')}`;
+}
 
-    // Get specialized doctors from the database
-    const doctors = await db.collection("doctors_list").find({}, { 
-      projection: { 
-        name: 1, 
-        specialization: 1, 
+async function ensureIndexes(db) {
+  await db.collection('doctors_list').createIndex({ doctorId: 1 }, { unique: true });
+  await db.collection('doctors_list').createIndex({ department: 1 });
+}
+
+export async function GET(request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const department = searchParams.get('department');
+
+    const client = await clientPromise;
+    const db = client.db('hospital-management');
+    await ensureIndexes(db);
+
+    const query = department ? { department } : {};
+    const doctors = await db.collection('doctors_list').find(query, {
+      projection: {
+        _id: 0,
+        doctorId: 1,
+        name: 1,
         department: 1,
-        _id: 0 
-      } 
+        specialization: 1,
+        contact: 1,
+        status: 1,
+      },
+      sort: { department: 1, name: 1 },
     }).toArray();
 
-    // If no doctors in DB, return default list
-    if (doctors.length === 0) {
-      const defaultDoctors = [
-        { name: "Dr. Sarah Johnson", specialization: "Cardiology", department: "Cardiology" },
-        { name: "Dr. Michael Chen", specialization: "Dermatology", department: "Dermatology" },
-        { name: "Dr. Emily Rodriguez", specialization: "Orthopedics", department: "Orthopedics" },
-        { name: "Dr. James Wilson", specialization: "General Medicine", department: "General Medicine" },
-        { name: "Dr. Lisa Thompson", specialization: "Pediatrics", department: "Pediatrics" },
-        { name: "Dr. Robert Kim", specialization: "Neurology", department: "Neurology" },
-        { name: "Dr. Maria Garcia", specialization: "Gynecology", department: "Gynecology" },
-        { name: "Dr. David Lee", specialization: "Psychiatry", department: "Psychiatry" }
-      ];
-      return NextResponse.json(defaultDoctors);
+    return NextResponse.json({ success: true, total: doctors.length, doctors });
+  } catch (error) {
+    console.error('Doctors GET error:', error);
+    return NextResponse.json({ success: false, error: 'Failed to fetch doctors' }, { status: 500 });
+  }
+}
+
+export async function POST(request) {
+  try {
+    const payload = await request.json();
+    const { action } = payload;
+    
+    console.log('Doctors API POST request:', { action, payload });
+
+    const client = await clientPromise;
+    const db = client.db('hospital-management');
+    await ensureIndexes(db);
+
+    if (action === 'add') {
+      const { name, department, specialization, contact, status = 'Active' } = payload;
+      if (!name || !department) {
+        return NextResponse.json({ success: false, message: 'name and department are required' }, { status: 400 });
+      }
+
+      // get next sequence number using counters collection for atomic increments
+      let counter = await db.collection('counters').findOne({ _id: 'doctorId' });
+      if (!counter) {
+        await db.collection('counters').insertOne({ _id: 'doctorId', seq: 0 });
+        counter = { seq: 0 };
+      }
+      
+      const newSeq = counter.seq + 1;
+      await db.collection('counters').updateOne(
+        { _id: 'doctorId' },
+        { $set: { seq: newSeq } }
+      );
+      const doctorId = generateDoctorId(newSeq);
+
+      const doc = {
+        doctorId,
+        name,
+        department,
+        specialization: specialization || department,
+        contact: contact || null,
+        status,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const result = await db.collection('doctors_list').insertOne(doc);
+      console.log('Doctor added successfully:', result);
+      return NextResponse.json({ success: true, doctor: doc });
     }
 
-    return NextResponse.json(doctors);
+    if (action === 'remove') {
+      const { doctorId } = payload;
+      if (!doctorId) {
+        return NextResponse.json({ success: false, message: 'doctorId is required' }, { status: 400 });
+      }
+      const res = await db.collection('doctors_list').deleteOne({ doctorId });
+      if (res.deletedCount === 0) {
+        return NextResponse.json({ success: false, message: 'Doctor not found' }, { status: 404 });
+      }
+      return NextResponse.json({ success: true });
+    }
 
+    if (action === 'seed') {
+      // seed a few test doctors
+      const departments = ['Cardiology','Dermatology','Orthopedics','General Medicine','Pediatrics','Neurology','Gynecology','Psychiatry'];
+      const names = ['A Sharma','B Mehta','C Rao','D Singh','E Verma','F Iyer','G Patel','H Khan'];
+      const batch = [];
+      let counter = await db.collection('counters').findOne({ _id: 'doctorId' });
+      if (!counter) {
+        await db.collection('counters').insertOne({ _id: 'doctorId', seq: 0 });
+        counter = { seq: 0 };
+      }
+      
+      for (let i = 0; i < names.length; i++) {
+        const newSeq = counter.seq + i + 1;
+        batch.push({
+          doctorId: generateDoctorId(newSeq),
+          name: `Dr. ${names[i]}`,
+          department: departments[i % departments.length],
+          specialization: departments[i % departments.length],
+          contact: `+91-98${Math.floor(100000000 + Math.random()*899999999).toString().slice(0,8)}`,
+          status: 'Active',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+      }
+      
+      // Update counter to the last sequence number
+      if (batch.length > 0) {
+        await db.collection('counters').updateOne(
+          { _id: 'doctorId' },
+          { $set: { seq: counter.seq + batch.length } }
+        );
+      }
+      if (batch.length) {
+        await db.collection('doctors_list').insertMany(batch, { ordered: false });
+      }
+      return NextResponse.json({ success: true, added: batch.length });
+    }
+
+    return NextResponse.json({ success: false, message: 'Invalid action' }, { status: 400 });
   } catch (error) {
-    console.error('Database error:', error);
-    // Return default list if database error
-    const defaultDoctors = [
-      { name: "Dr. Sarah Johnson", specialization: "Cardiology", department: "Cardiology" },
-      { name: "Dr. Michael Chen", specialization: "Dermatology", department: "Dermatology" },
-      { name: "Dr. Emily Rodriguez", specialization: "Orthopedics", department: "Orthopedics" },
-      { name: "Dr. James Wilson", specialization: "General Medicine", department: "General Medicine" },
-      { name: "Dr. Lisa Thompson", specialization: "Pediatrics", department: "Pediatrics" },
-      { name: "Dr. Robert Kim", specialization: "Neurology", department: "Neurology" },
-      { name: "Dr. Maria Garcia", specialization: "Gynecology", department: "Gynecology" },
-      { name: "Dr. David Lee", specialization: "Psychiatry", department: "Psychiatry" }
-    ];
-    return NextResponse.json(defaultDoctors);
+    console.error('Doctors POST error:', error);
+    const message = error?.code === 11000 ? 'Duplicate doctorId' : 'Failed to process request';
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }

@@ -33,6 +33,10 @@ export default function DoctorDashboard() {
   const [activeTab, setActiveTab] = useState("dashboard")
   const [tokenInput, setTokenInput] = useState("")
   const [currentPatient, setCurrentPatient] = useState(null)
+  const [currentToken, setCurrentToken] = useState(null)
+  const [doctorInfo, setDoctorInfo] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
   const [prescriptionForm, setPrescriptionForm] = useState({
     symptoms: "",
     diagnosis: "",
@@ -98,12 +102,44 @@ export default function DoctorDashboard() {
     }
   ]
 
-  const handleTokenSubmit = () => {
-    if (tokenInput.trim()) {
-      // Simulate patient lookup
-      setTimeout(() => {
-        setCurrentPatient(mockPatient)
-      }, 500)
+  useEffect(() => {
+    // Load doctor info from localStorage
+    const storedDoctor = localStorage.getItem('doctorInfo')
+    if (storedDoctor) {
+      setDoctorInfo(JSON.parse(storedDoctor))
+    } else {
+      // Redirect to login if no doctor info
+      window.location.href = '/doctor/login'
+    }
+  }, [])
+
+  const handleTokenSubmit = async () => {
+    if (!tokenInput.trim()) {
+      setError("Please enter a token number")
+      return
+    }
+
+    setLoading(true)
+    setError("")
+    setCurrentPatient(null)
+    setCurrentToken(null)
+
+    try {
+      const response = await fetch(`/api/tokens/verify?tokenNumber=${encodeURIComponent(tokenInput.trim())}`)
+      const data = await response.json()
+      
+      if (data.success) {
+        setCurrentPatient(data.patient)
+        setCurrentToken(data.token)
+        setError("")
+      } else {
+        setError(data.message || "Token verification failed")
+      }
+    } catch (error) {
+      console.error('Token verification error:', error)
+      setError("Network error. Please try again.")
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -130,20 +166,53 @@ export default function DoctorDashboard() {
     }))
   }
 
-  const handleSavePrescription = () => {
-    // Save prescription logic
-    console.log("Prescription saved:", prescriptionForm)
-    alert("Prescription saved successfully!")
-    
-    // Reset form
-    setPrescriptionForm({
-      symptoms: "",
-      diagnosis: "",
-      medicines: [{ name: "", dosage: "", duration: "" }],
-      notes: ""
-    })
-    setCurrentPatient(null)
-    setTokenInput("")
+  const handleSavePrescription = async () => {
+    if (!currentToken || !doctorInfo) {
+      alert("No active patient or doctor session")
+      return
+    }
+
+    if (!prescriptionForm.diagnosis.trim()) {
+      alert("Please enter a diagnosis")
+      return
+    }
+
+    setLoading(true)
+    try {
+      const response = await fetch('/api/prescriptions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tokenNumber: currentToken.tokenNumber,
+          doctorId: doctorInfo.doctorId,
+          prescription: prescriptionForm
+        })
+      })
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        alert("Prescription saved successfully!")
+        
+        // Reset form
+        setPrescriptionForm({
+          symptoms: "",
+          diagnosis: "",
+          medicines: [{ name: "", dosage: "", duration: "" }],
+          notes: ""
+        })
+        setCurrentPatient(null)
+        setCurrentToken(null)
+        setTokenInput("")
+      } else {
+        alert(data.message || "Failed to save prescription")
+      }
+    } catch (error) {
+      console.error('Save prescription error:', error)
+      alert("Network error. Please try again.")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -158,7 +227,9 @@ export default function DoctorDashboard() {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900">Doctor Dashboard</h1>
-                <p className="text-sm text-gray-600">Dr. Sarah Johnson • Cardiology</p>
+                <p className="text-sm text-gray-600">
+                  {doctorInfo ? `${doctorInfo.name} • ${doctorInfo.department}` : 'Loading...'}
+                </p>
               </div>
             </div>
             
@@ -256,11 +327,21 @@ export default function DoctorDashboard() {
                   <Button 
                     onClick={handleTokenSubmit}
                     className="bg-blue-600 hover:bg-blue-700 text-white px-6"
+                    disabled={loading}
                   >
-                    <Search className="w-5 h-5 mr-2" />
-                    Lookup
+                    {loading ? (
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                    ) : (
+                      <Search className="w-5 h-5 mr-2" />
+                    )}
+                    {loading ? 'Verifying...' : 'Lookup'}
                   </Button>
                 </div>
+                {error && (
+                  <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-3">
+                    <p className="text-red-700 text-sm text-center">{error}</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -435,9 +516,14 @@ export default function DoctorDashboard() {
                       <Button 
                         onClick={handleSavePrescription}
                         className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3"
+                        disabled={loading}
                       >
-                        <Save className="w-5 h-5 mr-2" />
-                        Save Prescription
+                        {loading ? (
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                        ) : (
+                          <Save className="w-5 h-5 mr-2" />
+                        )}
+                        {loading ? 'Saving...' : 'Save Prescription'}
                       </Button>
                     </div>
                   </form>
