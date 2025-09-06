@@ -29,6 +29,9 @@ export default function SmartHospitalLandingPage() {
   const [showLoginOptions, setShowLoginOptions] = useState(false)
 
   useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') return
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
