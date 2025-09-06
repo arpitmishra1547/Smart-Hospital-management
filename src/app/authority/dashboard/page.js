@@ -30,7 +30,7 @@ export default function AuthorityDashboardPage() {
   const [showAddDepartment, setShowAddDepartment] = useState(false)
   const [showAddRoom, setShowAddRoom] = useState(false)
   const [showAddSchedule, setShowAddSchedule] = useState(false)
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
+  const [selectedDate, setSelectedDate] = useState("")
   const [calendarView, setCalendarView] = useState("list") // list, calendar
   const [selectedSchedule, setSelectedSchedule] = useState(null)
   const [newDoctor, setNewDoctor] = useState({
@@ -52,7 +52,7 @@ export default function AuthorityDashboardPage() {
   const [newSchedule, setNewSchedule] = useState({
     roomId: "",
     doctorId: "",
-    date: selectedDate,
+    date: "",
     startTime: "",
     endTime: "",
     isRecurring: false,
@@ -461,14 +461,36 @@ export default function AuthorityDashboardPage() {
   }
 
   useEffect(() => {
+    // Initialize with today's date
+    const today = new Date().toISOString().split('T')[0]
+    setSelectedDate(today)
+    setNewSchedule(prev => ({ ...prev, date: today }))
+    
+    // Fetch initial data
     fetchDoctors(selectedDepartment)
     fetchDepartments()
     fetchOpdRooms()
-    fetchSchedules()
+    fetchSchedules(today)
     if (activeTab === 'patients') {
       fetchAllPatients()
     }
-  }, [selectedDepartment, selectedDate, activeTab])
+  }, [])
+
+  useEffect(() => {
+    if (selectedDate) {
+      fetchDoctors(selectedDepartment)
+      fetchSchedules(selectedDate)
+      if (activeTab === 'patients') {
+        fetchAllPatients()
+      }
+    }
+  }, [selectedDepartment, activeTab])
+
+  useEffect(() => {
+    if (selectedDate) {
+      fetchSchedules(selectedDate)
+    }
+  }, [selectedDate])
 
   const doctorBySpecialization = useMemo(() => {
     const deptCounts = doctors.reduce((acc, doctor) => {
