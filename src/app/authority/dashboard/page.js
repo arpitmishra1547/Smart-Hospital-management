@@ -1767,6 +1767,8 @@ function AuthorityDashboardPage() {
   )
 }
 
-export default AuthorityDashboardPage
+export default dynamic(() => Promise.resolve(AuthorityDashboardPage), {
+  ssr: false
+})
 
 

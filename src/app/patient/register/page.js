@@ -19,17 +19,51 @@ import {
 
 export default function PatientRegistration() {
   const [formData, setFormData] = useState({
+    // Basic Information
     fullName: "",
     dateOfBirth: "",
     age: "",
     gender: "",
-    mobileNumber: "",
-    aadhaarNumber: "",
     bloodGroup: "",
+    maritalStatus: "",
+    
+    // Contact Details
+    mobileNumber: "",
+    email: "",
+    emergencyContactName: "",
+    emergencyContactPhone: "",
     address: "",
+    houseNo: "",
     city: "",
+    state: "",
+    pincode: "",
+    
+    // Identification
+    patientId: "", // auto-generated
+    aadhaarNumber: "",
+    passportNumber: "",
+    drivingLicense: "",
+    idProofType: "",
+    
+    // Medical Information
+    existingConditions: "",
+    allergies: "",
+    currentMedications: "",
+    pastSurgeries: "",
+    familyMedicalHistory: "",
+    
+    // Payment & Hospital
+    paymentMethod: "",
+    hospitalCity: "",
     hospitalName: "",
-    department: ""
+    department: "",
+    preferredDoctor: "",
+    reasonForVisit: "",
+    appointmentDate: "",
+    appointmentTime: "",
+    
+    // Consent
+    consentAgreed: false
   })
   
   // Check for pending mobile number from login
@@ -51,10 +85,74 @@ export default function PatientRegistration() {
   const [aadhaarVerified, setAadhaarVerified] = useState(false)
   const [hospitalCoordinates, setHospitalCoordinates] = useState(null)
   const [geocodingLoading, setGeocodingLoading] = useState(false)
+  const [currentStep, setCurrentStep] = useState(1)
+  const [hospitals, setHospitals] = useState([])
+  const [departments, setDepartments] = useState([])
+  const [doctors, setDoctors] = useState([])
   
   const mapRef = useRef(null)
   const mapInstance = useRef(null)
   const marker = useRef(null)
+
+  // Sample hospital data by city
+  const hospitalsByCity = {
+    "Bhopal": [
+      { id: "1", name: "All India Institute of Medical Sciences (AIIMS)", address: "Saket Nagar, Bhopal" },
+      { id: "2", name: "Hamidia Hospital", address: "Hamidia Road, Bhopal" },
+      { id: "3", name: "People's Hospital", address: "Berasia Road, Bhopal" },
+      { id: "4", name: "Bansal Hospital", address: "C-Sector, Shahpura, Bhopal" }
+    ],
+    "Delhi": [
+      { id: "5", name: "All India Institute of Medical Sciences (AIIMS)", address: "Ansari Nagar, New Delhi" },
+      { id: "6", name: "Safdarjung Hospital", address: "Safdarjung, New Delhi" },
+      { id: "7", name: "Apollo Hospital", address: "Sarita Vihar, New Delhi" },
+      { id: "8", name: "Fortis Hospital", address: "Shalimar Bagh, New Delhi" }
+    ],
+    "Mumbai": [
+      { id: "9", name: "King Edward Memorial Hospital", address: "Parel, Mumbai" },
+      { id: "10", name: "Tata Memorial Hospital", address: "Parel, Mumbai" },
+      { id: "11", name: "Lilavati Hospital", address: "Bandra West, Mumbai" },
+      { id: "12", name: "Hinduja Hospital", address: "Mahim, Mumbai" }
+    ],
+    "Indore": [
+      { id: "13", name: "Maharaja Yeshwantrao Hospital", address: "M.G. Road, Indore" },
+      { id: "14", name: "Apollo Hospital", address: "Vijay Nagar, Indore" },
+      { id: "15", name: "Bombay Hospital", address: "Indore" },
+      { id: "16", name: "Greater Kailash Hospital", address: "Indore" }
+    ]
+  }
+
+  // Age calculation from DOB
+  const calculateAge = (dob) => {
+    if (!dob) return ""
+    const today = new Date()
+    const birthDate = new Date(dob)
+    let age = today.getFullYear() - birthDate.getFullYear()
+    const monthDiff = today.getMonth() - birthDate.getMonth()
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--
+    }
+    return age.toString()
+  }
+
+  // Handle hospital city change
+  const handleHospitalCityChange = (city) => {
+    setFormData(prev => ({
+      ...prev,
+      hospitalCity: city,
+      hospitalName: "", // Reset hospital selection
+      department: "",
+      preferredDoctor: ""
+    }))
+    setHospitals(hospitalsByCity[city] || [])
+  }
+
+  // Generate patient ID
+  const generatePatientId = () => {
+    const timestamp = Date.now()
+    const randomStr = Math.random().toString(36).substring(2, 8).toUpperCase()
+    return `P${timestamp}${randomStr}`
+  }
 
   // Load Google Maps API
   useEffect(() => {
