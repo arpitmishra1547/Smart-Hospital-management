@@ -16,7 +16,14 @@ const nextConfig = {
   },
   // Configure for Replit's proxy environment
   experimental: {
-    allowMiddlewareResponseBody: true,
+    turbo: {
+      rules: {
+        '*.svg': {
+          loaders: ['@svgr/webpack'],
+          as: '*.js',
+        },
+      },
+    },
   },
 };
 
