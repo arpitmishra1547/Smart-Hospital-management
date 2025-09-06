@@ -557,88 +557,308 @@ export default function PatientDashboard() {
               </CardHeader>
               <CardContent>
                 {editing ? (
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Full Name
-                      </label>
-                      <input
-                        type="text"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        value={editForm.fullName || ""}
-                        onChange={(e) =>
-                          updateEditForm("fullName", e.target.value)
-                        }
-                      />
+                  <div className="space-y-6">
+                    {/* Basic Information */}
+                    <div className="border-b pb-4">
+                      <h3 className="text-lg font-semibold mb-4 text-gray-900">Basic Information</h3>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Full Name
+                          </label>
+                          <input
+                            type="text"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            value={editForm.fullName || ""}
+                            onChange={(e) =>
+                              updateEditForm("fullName", e.target.value)
+                            }
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Date of Birth
+                          </label>
+                          <input
+                            type="date"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            value={editForm.dateOfBirth || ""}
+                            onChange={(e) =>
+                              updateEditForm("dateOfBirth", e.target.value)
+                            }
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Age
+                          </label>
+                          <input
+                            type="number"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50"
+                            value={editForm.age || ""}
+                            readOnly
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Gender
+                          </label>
+                          <select
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            value={editForm.gender || ""}
+                            onChange={(e) =>
+                              updateEditForm("gender", e.target.value)
+                            }
+                          >
+                            <option value="">Select Gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Blood Group
+                          </label>
+                          <select
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            value={editForm.bloodGroup || ""}
+                            onChange={(e) =>
+                              updateEditForm("bloodGroup", e.target.value)
+                            }
+                          >
+                            <option value="">Select Blood Group</option>
+                            <option value="A+">A+</option>
+                            <option value="A-">A-</option>
+                            <option value="B+">B+</option>
+                            <option value="B-">B-</option>
+                            <option value="AB+">AB+</option>
+                            <option value="AB-">AB-</option>
+                            <option value="O+">O+</option>
+                            <option value="O-">O-</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Marital Status
+                          </label>
+                          <select
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            value={editForm.maritalStatus || ""}
+                            onChange={(e) =>
+                              updateEditForm("maritalStatus", e.target.value)
+                            }
+                          >
+                            <option value="">Select Status</option>
+                            <option value="Single">Single</option>
+                            <option value="Married">Married</option>
+                            <option value="Divorced">Divorced</option>
+                            <option value="Widowed">Widowed</option>
+                          </select>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Age
-                      </label>
-                      <input
-                        type="number"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        value={editForm.age || ""}
-                        onChange={(e) => updateEditForm("age", e.target.value)}
-                      />
+
+                    {/* Contact Information */}
+                    <div className="border-b pb-4">
+                      <h3 className="text-lg font-semibold mb-4 text-gray-900">Contact Information</h3>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Mobile Number
+                          </label>
+                          <input
+                            type="tel"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50"
+                            value={editForm.mobileNumber || ""}
+                            readOnly
+                          />
+                          <p className="text-xs text-gray-500 mt-1">Mobile number cannot be changed</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Email ID
+                          </label>
+                          <input
+                            type="email"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            value={editForm.email || ""}
+                            onChange={(e) =>
+                              updateEditForm("email", e.target.value)
+                            }
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Emergency Contact Name
+                          </label>
+                          <input
+                            type="text"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            value={editForm.emergencyContactName || ""}
+                            onChange={(e) =>
+                              updateEditForm("emergencyContactName", e.target.value)
+                            }
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Emergency Contact Phone
+                          </label>
+                          <input
+                            type="tel"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            value={editForm.emergencyContactPhone || ""}
+                            onChange={(e) =>
+                              updateEditForm("emergencyContactPhone", e.target.value)
+                            }
+                          />
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Gender
-                      </label>
-                      <select
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        value={editForm.gender || ""}
-                        onChange={(e) =>
-                          updateEditForm("gender", e.target.value)
-                        }
-                      >
-                        <option value="">Select Gender</option>
-                        <option key="male" value="male">Male</option>
-                        <option key="female" value="female">Female</option>
-                        <option key="other" value="other">Other</option>
-                      </select>
+
+                    {/* Address Information */}
+                    <div className="border-b pb-4">
+                      <h3 className="text-lg font-semibold mb-4 text-gray-900">Address Information</h3>
+                      <div className="grid md:grid-cols-4 gap-4 mb-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            House No
+                          </label>
+                          <input
+                            type="text"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            value={editForm.houseNo || ""}
+                            onChange={(e) =>
+                              updateEditForm("houseNo", e.target.value)
+                            }
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            City
+                          </label>
+                          <input
+                            type="text"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            value={editForm.city || ""}
+                            onChange={(e) =>
+                              updateEditForm("city", e.target.value)
+                            }
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            State
+                          </label>
+                          <input
+                            type="text"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            value={editForm.state || ""}
+                            onChange={(e) =>
+                              updateEditForm("state", e.target.value)
+                            }
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Pincode
+                          </label>
+                          <input
+                            type="text"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            value={editForm.pincode || ""}
+                            onChange={(e) =>
+                              updateEditForm("pincode", e.target.value)
+                            }
+                            maxLength="6"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Complete Address
+                        </label>
+                        <textarea
+                          rows={3}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          value={editForm.address || ""}
+                          onChange={(e) =>
+                            updateEditForm("address", e.target.value)
+                          }
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Mobile Number
-                      </label>
-                      <input
-                        type="tel"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        value={editForm.mobileNumber || ""}
-                        onChange={(e) => updateEditForm("mobileNumber", e.target.value)}
-                      />
+
+                    {/* Medical Information */}
+                    <div className="border-b pb-4">
+                      <h3 className="text-lg font-semibold mb-4 text-gray-900">Medical Information</h3>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Existing Medical Conditions
+                          </label>
+                          <textarea
+                            rows={2}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            value={editForm.existingConditions || ""}
+                            onChange={(e) =>
+                              updateEditForm("existingConditions", e.target.value)
+                            }
+                            placeholder="e.g., Diabetes, Hypertension, Heart Disease"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Known Allergies
+                          </label>
+                          <textarea
+                            rows={2}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            value={editForm.allergies || ""}
+                            onChange={(e) =>
+                              updateEditForm("allergies", e.target.value)
+                            }
+                            placeholder="Food allergies, drug allergies, etc."
+                          />
+                        </div>
+                        <div className="grid md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Current Medications
+                            </label>
+                            <textarea
+                              rows={2}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              value={editForm.currentMedications || ""}
+                              onChange={(e) =>
+                                updateEditForm("currentMedications", e.target.value)
+                              }
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Payment Method Preference
+                            </label>
+                            <select
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              value={editForm.paymentMethod || ""}
+                              onChange={(e) =>
+                                updateEditForm("paymentMethod", e.target.value)
+                              }
+                            >
+                              <option value="">Select Payment Method</option>
+                              <option value="Cash">Cash</option>
+                              <option value="Card">Card (Credit/Debit)</option>
+                              <option value="UPI">UPI</option>
+                              <option value="Insurance">Insurance</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        City
-                      </label>
-                      <input
-                        type="text"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        value={editForm.city || ""}
-                        onChange={(e) =>
-                          updateEditForm("city", e.target.value)
-                        }
-                        placeholder="Enter your city"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Address
-                      </label>
-                      <textarea
-                        rows={3}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        value={editForm.address || ""}
-                        onChange={(e) =>
-                          updateEditForm("address", e.target.value)
-                        }
-                        placeholder="Enter your full address"
-                      />
-                    </div>
-                    <div className="flex space-x-2 pt-2">
+
+                    <div className="flex space-x-2 pt-4">
                       <Button
                         onClick={handleSaveProfile}
                         disabled={saving}
