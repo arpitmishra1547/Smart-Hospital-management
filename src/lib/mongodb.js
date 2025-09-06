@@ -1,6 +1,6 @@
 import { MongoClient } from 'mongodb';
 
-const uri = "mongodb+srv://arpitmishra1547:9977006842@hospital-management.f8holwi.mongodb.net/?retryWrites=true&w=majority&appName=hospital-management";
+const uri = process.env.MONGODB_URI;
 const options = {
   tls: true,
   tlsAllowInvalidCertificates: false,
