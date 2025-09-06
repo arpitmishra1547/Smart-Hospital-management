@@ -19,6 +19,7 @@ import {
   AlertTriangle,
   MapPin,
   Phone,
+  Mail,
   Calendar,
   TrendingUp,
   Users,
@@ -355,61 +356,181 @@ export default function DoctorDashboard() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">{currentPatient.name}</h3>
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <span className="font-medium text-gray-700">Age:</span> {currentPatient.age} years
+                  <div className="space-y-6">
+                    {/* Patient Header */}
+                    <div className="flex items-center space-x-4 pb-4 border-b">
+                      <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                        <User className="w-8 h-8 text-blue-600" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-xl font-bold text-gray-900">{currentPatient.fullName || currentPatient.name}</h3>
+                        <p className="text-gray-600">Patient ID: {currentPatient.patientId || currentPatient.id}</p>
+                        <p className="text-sm text-gray-500">Token: {currentToken?.tokenNumber}</p>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm text-gray-500">Visit Date</div>
+                        <div className="text-gray-900 font-medium">{new Date().toLocaleDateString()}</div>
+                      </div>
+                    </div>
+
+                    {/* Patient Details Grid */}
+                    <div className="grid lg:grid-cols-3 gap-6">
+                      {/* Basic Information */}
+                      <div className="space-y-4">
+                        <h4 className="font-semibold text-gray-900 border-b pb-2">Basic Information</h4>
+                        <div className="space-y-3 text-sm">
+                          <div className="flex justify-between">
+                            <span className="font-medium text-gray-600">Age:</span>
+                            <span className="text-gray-900">{currentPatient.age} years</span>
                           </div>
-                          <div>
-                            <span className="font-medium text-gray-700">Gender:</span> {currentPatient.gender}
+                          <div className="flex justify-between">
+                            <span className="font-medium text-gray-600">Gender:</span>
+                            <span className="text-gray-900">{currentPatient.gender}</span>
                           </div>
-                          <div>
-                            <span className="font-medium text-gray-700">Blood Group:</span> {currentPatient.bloodGroup}
+                          <div className="flex justify-between">
+                            <span className="font-medium text-gray-600">Blood Group:</span>
+                            <span className="text-gray-900 font-medium text-red-600">{currentPatient.bloodGroup || "Not specified"}</span>
                           </div>
-                          <div>
-                            <span className="font-medium text-gray-700">Patient ID:</span> {currentPatient.id}
+                          <div className="flex justify-between">
+                            <span className="font-medium text-gray-600">Marital Status:</span>
+                            <span className="text-gray-900">{currentPatient.maritalStatus || "Not specified"}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="font-medium text-gray-600">DOB:</span>
+                            <span className="text-gray-900">{currentPatient.dateOfBirth || "Not specified"}</span>
                           </div>
                         </div>
                       </div>
-                      
-                      <div>
-                        <h4 className="font-medium text-gray-700 mb-2">Contact Information</h4>
-                        <div className="space-y-2 text-sm">
-                          <div className="flex items-center">
-                            <Phone className="w-4 h-4 mr-2 text-gray-500" />
-                            {currentPatient.contact}
+
+                      {/* Contact Information */}
+                      <div className="space-y-4">
+                        <h4 className="font-semibold text-gray-900 border-b pb-2">Contact Information</h4>
+                        <div className="space-y-3 text-sm">
+                          <div className="flex items-start">
+                            <Phone className="w-4 h-4 mr-2 text-gray-500 mt-0.5" />
+                            <div>
+                              <div className="font-medium text-gray-600">Mobile:</div>
+                              <div className="text-gray-900">{currentPatient.mobileNumber || currentPatient.contact}</div>
+                            </div>
                           </div>
-                          <div className="flex items-center">
-                            <MapPin className="w-4 h-4 mr-2 text-gray-500" />
-                            {currentPatient.address}
+                          {currentPatient.email && (
+                            <div className="flex items-start">
+                              <Mail className="w-4 h-4 mr-2 text-gray-500 mt-0.5" />
+                              <div>
+                                <div className="font-medium text-gray-600">Email:</div>
+                                <div className="text-gray-900">{currentPatient.email}</div>
+                              </div>
+                            </div>
+                          )}
+                          <div className="flex items-start">
+                            <MapPin className="w-4 h-4 mr-2 text-gray-500 mt-0.5" />
+                            <div>
+                              <div className="font-medium text-gray-600">Address:</div>
+                              <div className="text-gray-900">{currentPatient.address}</div>
+                              {currentPatient.city && currentPatient.state && (
+                                <div className="text-gray-600 text-xs mt-1">
+                                  {currentPatient.city}, {currentPatient.state} {currentPatient.pincode}
+                                </div>
+                              )}
+                            </div>
                           </div>
+                          {currentPatient.emergencyContactName && (
+                            <div className="bg-orange-50 p-3 rounded-lg">
+                              <div className="font-medium text-orange-800 text-xs mb-1">Emergency Contact</div>
+                              <div className="text-orange-900 font-medium">{currentPatient.emergencyContactName}</div>
+                              <div className="text-orange-700 text-sm">{currentPatient.emergencyContactPhone}</div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Medical Information */}
+                      <div className="space-y-4">
+                        <h4 className="font-semibold text-gray-900 border-b pb-2">Medical Information</h4>
+                        <div className="space-y-3 text-sm">
+                          {currentPatient.allergies && (
+                            <div className="bg-red-50 p-3 rounded-lg">
+                              <div className="font-medium text-red-800 mb-1">⚠️ Allergies</div>
+                              <div className="text-red-900 text-sm">{currentPatient.allergies}</div>
+                            </div>
+                          )}
+                          {currentPatient.existingConditions && (
+                            <div>
+                              <div className="font-medium text-gray-600 mb-1">Existing Conditions:</div>
+                              <div className="text-gray-900 bg-gray-50 p-2 rounded text-sm">{currentPatient.existingConditions}</div>
+                            </div>
+                          )}
+                          {currentPatient.currentMedications && (
+                            <div>
+                              <div className="font-medium text-gray-600 mb-1">Current Medications:</div>
+                              <div className="text-gray-900 bg-blue-50 p-2 rounded text-sm">{currentPatient.currentMedications}</div>
+                            </div>
+                          )}
+                          {currentPatient.pastSurgeries && (
+                            <div>
+                              <div className="font-medium text-gray-600 mb-1">Past Surgeries:</div>
+                              <div className="text-gray-900 bg-gray-50 p-2 rounded text-sm">{currentPatient.pastSurgeries}</div>
+                            </div>
+                          )}
+                          {currentPatient.familyMedicalHistory && (
+                            <div>
+                              <div className="font-medium text-gray-600 mb-1">Family History:</div>
+                              <div className="text-gray-900 bg-purple-50 p-2 rounded text-sm">{currentPatient.familyMedicalHistory}</div>
+                            </div>
+                          )}
+                          {currentPatient.paymentMethod && (
+                            <div className="flex justify-between">
+                              <span className="font-medium text-gray-600">Payment Method:</span>
+                              <span className="text-gray-900">{currentPatient.paymentMethod}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
-                    
-                    <div className="space-y-4">
-                      <div>
-                        <h4 className="font-medium text-gray-700 mb-2">Medical Information</h4>
-                        <div className="space-y-2 text-sm">
-                          <div>
-                            <span className="font-medium text-gray-700">Allergies:</span>
-                            <span className="text-red-600 ml-2">{currentPatient.allergies || "None"}</span>
-                          </div>
-                          <div>
-                            <span className="font-medium text-gray-700">Medical History:</span>
-                            <p className="text-gray-600 mt-1">{currentPatient.medicalHistory || "No significant history"}</p>
-                          </div>
+
+                    {/* Current Visit Information */}
+                    {(currentPatient.reasonForVisit || currentPatient.problemDescription) && (
+                      <div className="border-t pt-4">
+                        <h4 className="font-semibold text-gray-900 mb-3">Current Visit</h4>
+                        <div className="bg-yellow-50 p-4 rounded-lg">
+                          <div className="font-medium text-yellow-800 mb-2">Reason for Visit / Symptoms</div>
+                          <div className="text-yellow-900">{currentPatient.reasonForVisit || currentPatient.problemDescription}</div>
                         </div>
                       </div>
-                      
-                      <div>
-                        <h4 className="font-medium text-gray-700 mb-2">Current Problem</h4>
-                        <p className="text-gray-600 text-sm">{currentPatient.problemDescription}</p>
+                    )}
+
+                    {/* Hospital & Department Info */}
+                    {(currentPatient.hospitalName || currentPatient.department) && (
+                      <div className="border-t pt-4">
+                        <h4 className="font-semibold text-gray-900 mb-3">Appointment Details</h4>
+                        <div className="grid md:grid-cols-2 gap-4 text-sm">
+                          {currentPatient.hospitalName && (
+                            <div>
+                              <span className="font-medium text-gray-600">Hospital:</span>
+                              <div className="text-gray-900">{currentPatient.hospitalName}</div>
+                            </div>
+                          )}
+                          {currentPatient.department && (
+                            <div>
+                              <span className="font-medium text-gray-600">Department:</span>
+                              <div className="text-gray-900">{currentPatient.department}</div>
+                            </div>
+                          )}
+                          {currentPatient.preferredDoctor && (
+                            <div>
+                              <span className="font-medium text-gray-600">Preferred Doctor:</span>
+                              <div className="text-gray-900">{currentPatient.preferredDoctor}</div>
+                            </div>
+                          )}
+                          {currentPatient.appointmentDate && (
+                            <div>
+                              <span className="font-medium text-gray-600">Preferred Date:</span>
+                              <div className="text-gray-900">{currentPatient.appointmentDate} {currentPatient.appointmentTime}</div>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
