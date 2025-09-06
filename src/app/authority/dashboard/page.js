@@ -1,9 +1,13 @@
 "use client"
 
 import { useMemo, useState, useEffect } from "react"
+import dynamic from "next/dynamic"
 import Sidebar from "@/components/authority/Sidebar"
 import StatCard from "@/components/authority/StatCard"
-import CalendarView from "@/components/authority/CalendarView"
+const CalendarView = dynamic(() => import("@/components/authority/CalendarView"), {
+  ssr: false,
+  loading: () => <div className="p-4 text-center">Loading calendar...</div>
+})
 import { motion } from "framer-motion"
 import { 
   Users2, Stethoscope, Activity, BedDouble, AlertTriangle, Gauge, TrendingUp, Plus, Trash2, Filter, RefreshCw,
@@ -15,7 +19,8 @@ import { Card, CardContent } from "@/components/ui/card"
 
 const COLORS = ["#007bff", "#28a745", "#10b981", "#60a5fa", "#34d399", "#f59e0b"]
 
-export default function AuthorityDashboardPage() {
+function AuthorityDashboardPage() {
+  const [mounted, setMounted] = useState(false)
   const [doctors, setDoctors] = useState([])
   const [departments, setDepartments] = useState([])
   const [opdRooms, setOpdRooms] = useState([])
@@ -31,6 +36,7 @@ export default function AuthorityDashboardPage() {
   const [showAddRoom, setShowAddRoom] = useState(false)
   const [showAddSchedule, setShowAddSchedule] = useState(false)
   const [selectedDate, setSelectedDate] = useState("")
+  const [isClient, setIsClient] = useState(false)
   const [calendarView, setCalendarView] = useState("list") // list, calendar
   const [selectedSchedule, setSelectedSchedule] = useState(null)
   const [newDoctor, setNewDoctor] = useState({
@@ -461,36 +467,41 @@ export default function AuthorityDashboardPage() {
   }
 
   useEffect(() => {
-    // Initialize with today's date
-    const today = new Date().toISOString().split('T')[0]
-    setSelectedDate(today)
-    setNewSchedule(prev => ({ ...prev, date: today }))
+    setMounted(true)
+    setIsClient(true)
     
-    // Fetch initial data
-    fetchDoctors(selectedDepartment)
-    fetchDepartments()
-    fetchOpdRooms()
-    fetchSchedules(today)
-    if (activeTab === 'patients') {
-      fetchAllPatients()
+    // Initialize with today's date only on client
+    if (typeof window !== 'undefined') {
+      const today = new Date().toISOString().split('T')[0]
+      setSelectedDate(today)
+      setNewSchedule(prev => ({ ...prev, date: today }))
+      
+      // Fetch initial data
+      fetchDoctors(selectedDepartment)
+      fetchDepartments()
+      fetchOpdRooms()
+      fetchSchedules(today)
+      if (activeTab === 'patients') {
+        fetchAllPatients()
+      }
     }
   }, [])
 
   useEffect(() => {
-    if (selectedDate) {
+    if (isClient && selectedDate) {
       fetchDoctors(selectedDepartment)
       fetchSchedules(selectedDate)
       if (activeTab === 'patients') {
         fetchAllPatients()
       }
     }
-  }, [selectedDepartment, activeTab])
+  }, [selectedDepartment, activeTab, isClient])
 
   useEffect(() => {
-    if (selectedDate) {
+    if (isClient && selectedDate) {
       fetchSchedules(selectedDate)
     }
-  }, [selectedDate])
+  }, [selectedDate, isClient])
 
   const doctorBySpecialization = useMemo(() => {
     const deptCounts = doctors.reduce((acc, doctor) => {
@@ -534,6 +545,17 @@ export default function AuthorityDashboardPage() {
 
   const bedStats = { total: 500, occupied: 372 }
   const occupancy = Math.round((bedStats.occupied / bedStats.total) * 100)
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-white via-blue-50 to-green-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading Authority Dashboard...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-blue-50 to-green-50">
@@ -1744,5 +1766,7 @@ export default function AuthorityDashboardPage() {
     </div>
   )
 }
+
+export default AuthorityDashboardPage
 
 
