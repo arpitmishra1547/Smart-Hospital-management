@@ -20,6 +20,9 @@ export default function AuthorityDashboardPage() {
   const [departments, setDepartments] = useState([])
   const [opdRooms, setOpdRooms] = useState([])
   const [schedules, setSchedules] = useState([])
+  const [patients, setPatients] = useState([])
+  const [selectedPatient, setSelectedPatient] = useState(null)
+  const [patientHistory, setPatientHistory] = useState([])
   const [loading, setLoading] = useState(false)
   const [selectedDepartment, setSelectedDepartment] = useState("")
   const [activeTab, setActiveTab] = useState("dashboard")
@@ -113,6 +116,36 @@ export default function AuthorityDashboardPage() {
       }
     } catch (error) {
       console.error('Failed to fetch schedules:', error)
+    }
+  }
+
+  const fetchAllPatients = async () => {
+    setLoading(true)
+    try {
+      const response = await fetch('/api/patients')
+      const data = await response.json()
+      if (data.success) {
+        setPatients(data.patients || [])
+      }
+    } catch (error) {
+      console.error('Failed to fetch patients:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const fetchPatientHistory = async (patientId) => {
+    setLoading(true)
+    try {
+      const response = await fetch(`/api/patients/history?patientId=${patientId}`)
+      const data = await response.json()
+      if (data.success) {
+        setPatientHistory(data.prescriptions || [])
+      }
+    } catch (error) {
+      console.error('Failed to fetch patient history:', error)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -432,7 +465,10 @@ export default function AuthorityDashboardPage() {
     fetchDepartments()
     fetchOpdRooms()
     fetchSchedules()
-  }, [selectedDepartment, selectedDate])
+    if (activeTab === 'patients') {
+      fetchAllPatients()
+    }
+  }, [selectedDepartment, selectedDate, activeTab])
 
   const doctorBySpecialization = useMemo(() => {
     const deptCounts = doctors.reduce((acc, doctor) => {
@@ -499,6 +535,7 @@ export default function AuthorityDashboardPage() {
           <div className="flex space-x-1 bg-white/70 backdrop-blur-md rounded-xl p-1 border border-gray-200">
             {[
               { id: "dashboard", label: "Dashboard", icon: Activity },
+              { id: "patients", label: "Patients", icon: Users2 },
               { id: "departments", label: "Departments", icon: Building2 },
               { id: "opd-rooms", label: "OPD Rooms", icon: MapPin },
               { id: "scheduling", label: "Scheduling", icon: Calendar },
@@ -809,6 +846,246 @@ export default function AuthorityDashboardPage() {
                 </div>
               </section>
             </>
+          )}
+
+          {/* Patients Tab Content */}
+          {activeTab === "patients" && (
+            <div className="space-y-6">
+              <div className="bg-white/70 backdrop-blur-md rounded-2xl p-6 border border-gray-200">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-semibold text-gray-900">Patient Management</h3>
+                  <div className="flex items-center space-x-2">
+                    <select
+                      value={selectedDepartment}
+                      onChange={(e) => setSelectedDepartment(e.target.value)}
+                      className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                    >
+                      <option value="">All Departments</option>
+                      {departments.map(dept => (
+                        <option key={dept.departmentId || dept.name} value={dept.name}>{dept.name}</option>
+                      ))}
+                    </select>
+                    <Button
+                      onClick={fetchAllPatients}
+                      size="sm"
+                      variant="outline"
+                      disabled={loading}
+                    >
+                      <RefreshCw className={`w-4 h-4 mr-1 ${loading ? 'animate-spin' : ''}`} />
+                      Refresh
+                    </Button>
+                  </div>
+                </div>
+
+                {loading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="text-gray-500">Loading patients...</div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="mb-4 text-sm text-gray-600">
+                      Total Patients: {patients.length} | 
+                      {selectedDepartment ? ` ${selectedDepartment} Department: ${patients.filter(p => p.department === selectedDepartment).length}` : ' All Departments'}
+                    </div>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-gray-200">
+                            <th className="text-left py-3 px-2 font-medium text-gray-900">Patient ID</th>
+                            <th className="text-left py-3 px-2 font-medium text-gray-900">Name</th>
+                            <th className="text-left py-3 px-2 font-medium text-gray-900">Age</th>
+                            <th className="text-left py-3 px-2 font-medium text-gray-900">Gender</th>
+                            <th className="text-left py-3 px-2 font-medium text-gray-900">Department</th>
+                            <th className="text-left py-3 px-2 font-medium text-gray-900">Mobile</th>
+                            <th className="text-left py-3 px-2 font-medium text-gray-900">Registration Date</th>
+                            <th className="text-left py-3 px-2 font-medium text-gray-900">Status</th>
+                            <th className="text-left py-3 px-2 font-medium text-gray-900">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {patients
+                            .filter(patient => !selectedDepartment || patient.department === selectedDepartment)
+                            .map((patient, index) => (
+                            <tr key={patient.patientId || index} className="border-b border-gray-100 hover:bg-gray-50">
+                              <td className="py-3 px-2 text-blue-600 font-medium">{patient.patientId || 'N/A'}</td>
+                              <td className="py-3 px-2">
+                                <div className="font-medium text-gray-900">{patient.fullName || 'N/A'}</div>
+                                <div className="text-xs text-gray-500">{patient.aadhaarNumber || 'No Aadhaar'}</div>
+                              </td>
+                              <td className="py-3 px-2">{patient.age || 'N/A'}</td>
+                              <td className="py-3 px-2">{patient.gender || 'N/A'}</td>
+                              <td className="py-3 px-2">
+                                <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                                  {patient.department || 'General'}
+                                </span>
+                              </td>
+                              <td className="py-3 px-2">{patient.mobileNumber || 'N/A'}</td>
+                              <td className="py-3 px-2">
+                                {patient.registrationDate ? new Date(patient.registrationDate).toLocaleDateString() : 
+                                 patient.createdAt ? new Date(patient.createdAt).toLocaleDateString() : 'N/A'}
+                              </td>
+                              <td className="py-3 px-2">
+                                <span className={`px-2 py-1 rounded-full text-xs ${
+                                  patient.status === 'Registered' ? 'bg-green-100 text-green-800' :
+                                  patient.tokenStatus === 'Token Generated' ? 'bg-yellow-100 text-yellow-800' :
+                                  'bg-gray-100 text-gray-800'
+                                }`}>
+                                  {patient.status || 'Active'}
+                                </span>
+                              </td>
+                              <td className="py-3 px-2">
+                                <div className="flex space-x-1">
+                                  <Button
+                                    onClick={() => {
+                                      setSelectedPatient(patient)
+                                      fetchPatientHistory(patient.patientId)
+                                    }}
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-xs"
+                                  >
+                                    <Eye className="w-3 h-3 mr-1" />
+                                    View
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+
+                      {patients.filter(patient => !selectedDepartment || patient.department === selectedDepartment).length === 0 && (
+                        <div className="text-center py-8 text-gray-500">
+                          {selectedDepartment ? `No patients found in ${selectedDepartment} department` : 'No patients found'}
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Patient Details Modal */}
+              {selectedPatient && (
+                <div className="bg-white/70 backdrop-blur-md rounded-2xl p-6 border border-gray-200">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-semibold text-gray-900">
+                      Patient Details - {selectedPatient.fullName}
+                    </h3>
+                    <Button
+                      onClick={() => {
+                        setSelectedPatient(null)
+                        setPatientHistory([])
+                      }}
+                      size="sm"
+                      variant="outline"
+                    >
+                      <X className="w-4 h-4 mr-1" />
+                      Close
+                    </Button>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-6">
+                    {/* Patient Information */}
+                    <div>
+                      <h4 className="font-semibold mb-4 text-gray-900">Personal Information</h4>
+                      <div className="space-y-3 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Patient ID:</span>
+                          <span className="font-medium">{selectedPatient.patientId || 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Full Name:</span>
+                          <span className="font-medium">{selectedPatient.fullName || 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Age:</span>
+                          <span className="font-medium">{selectedPatient.age || 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Gender:</span>
+                          <span className="font-medium">{selectedPatient.gender || 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Blood Group:</span>
+                          <span className="font-medium">{selectedPatient.bloodGroup || 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Mobile:</span>
+                          <span className="font-medium">{selectedPatient.mobileNumber || 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Aadhaar:</span>
+                          <span className="font-medium">{selectedPatient.aadhaarNumber || 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Address:</span>
+                          <span className="font-medium">{selectedPatient.address || 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Department:</span>
+                          <span className="font-medium">{selectedPatient.department || 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Token Number:</span>
+                          <span className="font-medium">{selectedPatient.tokenNumber || 'N/A'}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Medical History */}
+                    <div>
+                      <h4 className="font-semibold mb-4 text-gray-900">Medical History</h4>
+                      {loading ? (
+                        <div className="text-center py-4 text-gray-500">Loading history...</div>
+                      ) : patientHistory.length > 0 ? (
+                        <div className="space-y-3 max-h-96 overflow-y-auto">
+                          {patientHistory.map((prescription, index) => (
+                            <div key={index} className="bg-gray-50 rounded-lg p-4 border">
+                              <div className="flex justify-between items-start mb-2">
+                                <span className="font-medium text-sm text-gray-900">
+                                  {prescription.doctorName || 'Dr. Unknown'}
+                                </span>
+                                <span className="text-xs text-gray-500">
+                                  {prescription.createdAt ? new Date(prescription.createdAt).toLocaleDateString() : 'N/A'}
+                                </span>
+                              </div>
+                              <div className="text-sm text-gray-700 mb-2">
+                                <strong>Diagnosis:</strong> {prescription.diagnosis || 'N/A'}
+                              </div>
+                              <div className="text-sm text-gray-700 mb-2">
+                                <strong>Symptoms:</strong> {prescription.symptoms || 'N/A'}
+                              </div>
+                              {prescription.medicines && prescription.medicines.length > 0 && (
+                                <div className="text-sm text-gray-700 mb-2">
+                                  <strong>Medicines:</strong>
+                                  <ul className="list-disc list-inside mt-1">
+                                    {prescription.medicines.map((med, medIndex) => (
+                                      <li key={medIndex} className="text-xs">
+                                        {med.name} - {med.dosage} for {med.duration}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                              {prescription.notes && (
+                                <div className="text-sm text-gray-700">
+                                  <strong>Notes:</strong> {prescription.notes}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8 text-gray-500">
+                          No medical history found for this patient
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
 
           {/* Department Management Tab */}
