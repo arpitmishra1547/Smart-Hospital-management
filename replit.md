@@ -4,6 +4,8 @@ This is a Smart Hospital Management System built as a modern, full-stack web app
 
 The application serves three main user types: patients who can register and track their hospital visits, doctors who can manage patient consultations and prescriptions, and hospital authorities who can oversee operations, manage staff, and monitor analytics.
 
+**Note**: This project is configured to run both in Replit and locally. See `LOCAL_SETUP.md` for local development instructions.
+
 # User Preferences
 
 Preferred communication style: Simple, everyday language.
