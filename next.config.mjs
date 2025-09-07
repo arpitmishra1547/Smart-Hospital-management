@@ -1,9 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Allow all hosts for Replit environment
-  experimental: {
-    allowedHosts: true
-  },
   async headers() {
     return [
       {
