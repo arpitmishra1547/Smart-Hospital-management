@@ -72,7 +72,8 @@ export default function PatientRegistration() {
   const [currentStep, setCurrentStep] = useState(1)
   const [hospitals, setHospitals] = useState([])
   const [showCitySuggestions, setShowCitySuggestions] = useState(false)
-  const [filteredCities, setFilteredCities] = useState(citySuggestions)
+  
+  const [filteredCities, setFilteredCities] = useState(["Delhi", "Mumbai", "Bangalore", "Chennai", "Kolkata", "Hyderabad", "Pune", "Ahmedabad", "Jaipur", "Lucknow", "Bhopal", "Indore", "Surat", "Kanpur", "Nagpur", "Visakhapatnam", "Patna", "Vadodara", "Ludhiana", "Coimbatore"])
 
   // Check for pending mobile number from login
   useEffect(() => {
@@ -83,11 +84,6 @@ export default function PatientRegistration() {
     }
   }, [])
 
-  // Sample city suggestions
-  const citySuggestions = [
-    "Bhopal", "Delhi", "Mumbai", "Indore", "Bangalore", "Chennai", "Kolkata", "Hyderabad",
-    "Pune", "Ahmedabad", "Jaipur", "Lucknow", "Kanpur", "Nagpur", "Visakhapatnam", "Surat"
-  ]
   
   // Sample hospital data by city with Test Hospital always included
   const hospitalsByCity = {
@@ -198,6 +194,7 @@ export default function PatientRegistration() {
     
     // Handle city input for suggestions
     if (field === "hospitalCity") {
+      const citySuggestions = ["Delhi", "Mumbai", "Bangalore", "Chennai", "Kolkata", "Hyderabad", "Pune", "Ahmedabad", "Jaipur", "Lucknow", "Bhopal", "Indore", "Surat", "Kanpur", "Nagpur", "Visakhapatnam", "Patna", "Vadodara", "Ludhiana", "Coimbatore"]
       const filtered = citySuggestions.filter(city => 
         city.toLowerCase().includes(value.toLowerCase())
       )
