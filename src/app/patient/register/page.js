@@ -71,6 +71,8 @@ export default function PatientRegistration() {
   const [error, setError] = useState("")
   const [currentStep, setCurrentStep] = useState(1)
   const [hospitals, setHospitals] = useState([])
+  const [showCitySuggestions, setShowCitySuggestions] = useState(false)
+  const [filteredCities, setFilteredCities] = useState(citySuggestions)
 
   // Check for pending mobile number from login
   useEffect(() => {
@@ -81,32 +83,58 @@ export default function PatientRegistration() {
     }
   }, [])
 
-  // Sample hospital data by city
+  // Sample city suggestions
+  const citySuggestions = [
+    "Bhopal", "Delhi", "Mumbai", "Indore", "Bangalore", "Chennai", "Kolkata", "Hyderabad",
+    "Pune", "Ahmedabad", "Jaipur", "Lucknow", "Kanpur", "Nagpur", "Visakhapatnam", "Surat"
+  ]
+  
+  // Sample hospital data by city with Test Hospital always included
   const hospitalsByCity = {
     "Bhopal": [
+      { id: "test-hospital", name: "Test Hospital", address: "Test Location (Always Available)", isTestHospital: true },
       { id: "1", name: "All India Institute of Medical Sciences (AIIMS)", address: "Saket Nagar, Bhopal" },
       { id: "2", name: "Hamidia Hospital", address: "Hamidia Road, Bhopal" },
       { id: "3", name: "People's Hospital", address: "Berasia Road, Bhopal" },
       { id: "4", name: "Bansal Hospital", address: "C-Sector, Shahpura, Bhopal" }
     ],
     "Delhi": [
+      { id: "test-hospital", name: "Test Hospital", address: "Test Location (Always Available)", isTestHospital: true },
       { id: "5", name: "All India Institute of Medical Sciences (AIIMS)", address: "Ansari Nagar, New Delhi" },
       { id: "6", name: "Safdarjung Hospital", address: "Safdarjung, New Delhi" },
       { id: "7", name: "Apollo Hospital", address: "Sarita Vihar, New Delhi" },
       { id: "8", name: "Fortis Hospital", address: "Shalimar Bagh, New Delhi" }
     ],
     "Mumbai": [
+      { id: "test-hospital", name: "Test Hospital", address: "Test Location (Always Available)", isTestHospital: true },
       { id: "9", name: "King Edward Memorial Hospital", address: "Parel, Mumbai" },
       { id: "10", name: "Tata Memorial Hospital", address: "Parel, Mumbai" },
       { id: "11", name: "Lilavati Hospital", address: "Bandra West, Mumbai" },
       { id: "12", name: "Hinduja Hospital", address: "Mahim, Mumbai" }
     ],
     "Indore": [
+      { id: "test-hospital", name: "Test Hospital", address: "Test Location (Always Available)", isTestHospital: true },
       { id: "13", name: "Maharaja Yeshwantrao Hospital", address: "M.G. Road, Indore" },
       { id: "14", name: "Apollo Hospital", address: "Vijay Nagar, Indore" },
       { id: "15", name: "Bombay Hospital", address: "Indore" },
       { id: "16", name: "Greater Kailash Hospital", address: "Indore" }
     ]
+  }
+  
+  // Add Test Hospital to any city
+  const addTestHospitalToCity = (cityName) => {
+    if (!hospitalsByCity[cityName]) {
+      hospitalsByCity[cityName] = []
+    }
+    // Only add if not already present
+    if (!hospitalsByCity[cityName].some(h => h.isTestHospital)) {
+      hospitalsByCity[cityName].unshift({
+        id: "test-hospital",
+        name: "Test Hospital",
+        address: "Test Location (Always Available)",
+        isTestHospital: true
+      })
+    }
   }
 
   // Age calculation from DOB
@@ -131,6 +159,9 @@ export default function PatientRegistration() {
 
   // Handle hospital city change
   const handleHospitalCityChange = (city) => {
+    // Add Test Hospital to any city
+    addTestHospitalToCity(city)
+    
     setFormData(prev => ({
       ...prev,
       hospitalCity: city,
@@ -164,6 +195,28 @@ export default function PatientRegistration() {
         patientId: generatePatientId()
       }))
     }
+    
+    // Handle city input for suggestions
+    if (field === "hospitalCity") {
+      const filtered = citySuggestions.filter(city => 
+        city.toLowerCase().includes(value.toLowerCase())
+      )
+      setFilteredCities(filtered)
+      setShowCitySuggestions(value.length > 0 && filtered.length > 0)
+    }
+  }
+  
+  // Handle city selection from suggestions
+  const handleCitySelect = (city) => {
+    setFormData(prev => ({
+      ...prev,
+      hospitalCity: city,
+      hospitalName: "",
+      department: "",
+      preferredDoctor: ""
+    }))
+    setShowCitySuggestions(false)
+    handleHospitalCityChange(city)
   }
 
   // Step navigation
@@ -625,20 +678,34 @@ export default function PatientRegistration() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div>
+              <div className="relative">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Hospital City *</label>
-                <select
+                <input
+                  type="text"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   value={formData.hospitalCity}
-                  onChange={(e) => handleHospitalCityChange(e.target.value)}
+                  onChange={(e) => handleInputChange("hospitalCity", e.target.value)}
+                  onFocus={() => setShowCitySuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowCitySuggestions(false), 200)}
+                  placeholder="Enter city name (e.g., Delhi, Mumbai, Bhopal)"
                   required
-                >
-                  <option value="">Select Hospital City</option>
-                  <option value="Bhopal">Bhopal</option>
-                  <option value="Delhi">Delhi</option>
-                  <option value="Mumbai">Mumbai</option>
-                  <option value="Indore">Indore</option>
-                </select>
+                />
+                
+                {/* City Suggestions Dropdown */}
+                {showCitySuggestions && filteredCities.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                    {filteredCities.map((city) => (
+                      <button
+                        key={city}
+                        type="button"
+                        onClick={() => handleCitySelect(city)}
+                        className="w-full px-3 py-2 text-left hover:bg-blue-50 focus:bg-blue-50 focus:outline-none border-b border-gray-100 last:border-b-0"
+                      >
+                        {city}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
               
               {formData.hospitalCity && (
@@ -652,11 +719,30 @@ export default function PatientRegistration() {
                   >
                     <option value="">Select Hospital</option>
                     {hospitals.map(hospital => (
-                      <option key={hospital.id} value={hospital.name}>
-                        {hospital.name} - {hospital.address}
+                      <option 
+                        key={hospital.id} 
+                        value={hospital.name}
+                        style={hospital.isTestHospital ? { fontWeight: 'bold', color: '#059669' } : {}}
+                      >
+                        {hospital.isTestHospital ? '🧪 ' : ''}{hospital.name} - {hospital.address}
                       </option>
                     ))}
                   </select>
+                  
+                  {/* Test Hospital Information */}
+                  {hospitals.some(h => h.isTestHospital) && (
+                    <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="flex items-start">
+                        <div className="text-green-600 mr-2">🧪</div>
+                        <div>
+                          <p className="text-sm font-medium text-green-800 mb-1">Test Hospital Available</p>
+                          <p className="text-xs text-green-700">
+                            Select "Test Hospital" for testing purposes. This hospital is always considered within 100m of your location for token generation.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
               
