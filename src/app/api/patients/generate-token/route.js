@@ -61,20 +61,30 @@ export async function POST(request) {
       }, { status: 404 });
     }
 
-    // Calculate distance between patient's current location and hospital
-    const distance = calculateDistance(
-      currentLat, 
-      currentLng, 
-      hospitalLocation.coordinates.lat, 
-      hospitalLocation.coordinates.lng
-    );
+    let distance = 0;
+    let isTestHospital = false;
 
-    // Check if patient is within 100 meters of hospital
-    if (distance > 100) {
+    // Check if this is Test Hospital (always within 100m for testing)
+    if (hospitalLocation.hospitalName === "Test Hospital") {
+      distance = 50; // Always set to 50m for Test Hospital
+      isTestHospital = true;
+    } else {
+      // Calculate distance between patient's current location and hospital
+      distance = calculateDistance(
+        currentLat, 
+        currentLng, 
+        hospitalLocation.coordinates.lat, 
+        hospitalLocation.coordinates.lng
+      );
+    }
+
+    // Check if patient is within 100 meters of hospital (skip for Test Hospital)
+    if (!isTestHospital && distance > 100) {
       return NextResponse.json({ 
         success: false, 
         message: `Patient is ${Math.round(distance)} meters away from hospital. Must be within 100 meters to generate token.`,
-        distance: Math.round(distance)
+        distance: Math.round(distance),
+        isTestHospital: false
       }, { status: 400 });
     }
 
@@ -141,7 +151,7 @@ export async function POST(request) {
 
       return NextResponse.json({ 
         success: true, 
-        message: "Token generated successfully",
+        message: isTestHospital ? "Token generated successfully for Test Hospital" : "Token generated successfully",
         token: {
           tokenNumber,
           patientName: patient.fullName,
@@ -150,7 +160,8 @@ export async function POST(request) {
           city: hospitalLocation.city,
           date: todayStr,
           generatedAt: token.generatedAt,
-          distance: Math.round(distance)
+          distance: Math.round(distance),
+          isTestHospital: isTestHospital
         }
       });
     } else {

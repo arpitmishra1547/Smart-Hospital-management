@@ -407,6 +407,62 @@ export default function LocationTracker({ patientData }) {
     }
   }
 
+  // Handle Test Hospital token generation (always within 100m)
+  const handleTestHospitalTokenGeneration = async () => {
+    if (generatingToken || tokenGenerated) return
+    
+    setGeneratingToken(true)
+    
+    try {
+      // Use mock coordinates for Test Hospital (doesn't matter as it's always within 100m)
+      const mockLat = 20.5937
+      const mockLng = 78.9629
+      
+      const response = await fetch('/api/patients/generate-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          patientId: patientData.patientId,
+          currentLat: mockLat,
+          currentLng: mockLng
+        })
+      })
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        setTokenGenerated(true)
+        setTokenData(data.token)
+        
+        // Show success notification
+        if ('Notification' in window && Notification.permission === 'granted') {
+          new Notification('Test Hospital Token Generated!', {
+            body: `Your token ${data.token.tokenNumber} has been generated for ${data.token.department} at Test Hospital`,
+            icon: '/favicon.ico'
+          })
+        }
+        
+        // Update patient data in localStorage
+        const updatedPatientData = {
+          ...patientData,
+          tokenStatus: "Token Generated",
+          tokenNumber: data.token.tokenNumber
+        }
+        localStorage.setItem('patientData', JSON.stringify(updatedPatientData))
+        
+        alert('Test Hospital token generated successfully! Your token number is: ' + data.token.tokenNumber)
+      } else {
+        console.error('Test Hospital token generation failed:', data.message)
+        setLocationError(data.message || 'Failed to generate token for Test Hospital')
+      }
+    } catch (error) {
+      console.error('Test Hospital token generation error:', error)
+      setLocationError('Network error. Please try again.')
+    } finally {
+      setGeneratingToken(false)
+    }
+  }
+
   // Haversine formula to calculate distance
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
     const R = 6371 // Radius of the Earth in kilometers
@@ -515,7 +571,10 @@ export default function LocationTracker({ patientData }) {
   }
 
   // Show registration prompt if hospital coordinates are missing
-  if (!patientData?.hospitalCoordinates) {
+  // Check if this is Test Hospital
+  const isTestHospital = patientData?.hospitalName === "Test Hospital"
+  
+  if (!patientData?.hospitalCoordinates && !isTestHospital) {
     return (
       <Card className="backdrop-blur-sm bg-white/80 border-0 shadow-xl">
         <CardHeader>
@@ -549,6 +608,51 @@ export default function LocationTracker({ patientData }) {
 
   return (
     <div className="space-y-6">
+      {/* Test Hospital Token Generation Card */}
+      {isTestHospital && !tokenGenerated && (
+        <Card className="backdrop-blur-sm bg-white/80 border-0 shadow-xl">
+          <CardHeader>
+            <CardTitle className="flex items-center text-xl">
+              <CheckCircle className="w-5 h-5 mr-2 text-green-600" />
+              🧪 Test Hospital - Token Generation
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-center py-6">
+            <div className="space-y-4">
+              <div className="w-16 h-16 bg-green-100 rounded-full mx-auto flex items-center justify-center">
+                <CheckCircle className="w-8 h-8 text-green-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-2">Test Hospital Selected</h3>
+                <p className="text-gray-600 text-sm mb-4">
+                  You have selected Test Hospital. Click the button below to generate your token for testing purposes.
+                </p>
+                <p className="text-green-700 text-xs mb-4">
+                  Note: Test Hospital is always considered within 100m of your location for testing.
+                </p>
+              </div>
+              <Button 
+                onClick={() => handleTestHospitalTokenGeneration()}
+                disabled={generatingToken}
+                className="bg-green-600 hover:bg-green-700 text-white px-8 py-3"
+              >
+                {generatingToken ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Generating Token...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Click here to Generate Token
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Location Status Card */}
       <Card className="backdrop-blur-sm bg-white/80 border-0 shadow-xl">
         <CardHeader>
