@@ -31,6 +31,9 @@ export default function LocationTracker({ patientData }) {
   const [showMap, setShowMap] = useState(false)
   const [locationPermission, setLocationPermission] = useState(null)
   const [showLocationPrompt, setShowLocationPrompt] = useState(false)
+  const [showQRScanner, setShowQRScanner] = useState(false)
+  const [qrCodeInput, setQrCodeInput] = useState('')
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   
   const locationInterval = useRef(null)
   const mapRef = useRef(null)
@@ -463,6 +466,112 @@ export default function LocationTracker({ patientData }) {
     }
   }
 
+  // Handle QR code token generation
+  const handleQRCodeGeneration = async () => {
+    if (!qrCodeInput.trim()) {
+      setLocationError("Please enter or scan a QR code")
+      return
+    }
+
+    setGeneratingToken(true)
+    
+    try {
+      // Parse QR code - expecting format: HOSPITAL|DEPARTMENT|PATIENT_ID
+      const qrParts = qrCodeInput.split('|')
+      if (qrParts.length !== 3) {
+        throw new Error("Invalid QR code format")
+      }
+
+      const [qrHospital, qrDepartment, qrPatientId] = qrParts
+      
+      // Verify patient ID matches
+      if (qrPatientId !== patientData.patientId) {
+        throw new Error("QR code does not match your patient ID")
+      }
+
+      // Generate token using mock coordinates (QR bypasses location requirement)
+      const response = await fetch('/api/patients/generate-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          patientId: patientData.patientId,
+          currentLat: 20.5937, // Mock coordinates for QR generation
+          currentLng: 78.9629,
+          qrCodeGeneration: true
+        })
+      })
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        setTokenGenerated(true)
+        setTokenData(data.token)
+        setShowQRScanner(false)
+        setQrCodeInput('')
+        
+        // Update patient data in localStorage
+        const updatedPatientData = {
+          ...patientData,
+          tokenStatus: "Token Generated",
+          tokenNumber: data.token.tokenNumber
+        }
+        localStorage.setItem('patientData', JSON.stringify(updatedPatientData))
+        
+        alert('QR Code token generated successfully! Your token number is: ' + data.token.tokenNumber)
+      } else {
+        setLocationError(data.message || 'Failed to generate token using QR code')
+      }
+    } catch (error) {
+      console.error('QR Code token generation error:', error)
+      setLocationError(error.message || 'Invalid QR code. Please try again.')
+    } finally {
+      setGeneratingToken(false)
+    }
+  }
+
+  // Handle token cancellation
+  const handleCancelToken = async () => {
+    if (!tokenData) return
+
+    setGeneratingToken(true)
+    
+    try {
+      const response = await fetch('/api/patients/cancel-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          patientId: patientData.patientId,
+          tokenNumber: tokenData.tokenNumber
+        })
+      })
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        setTokenGenerated(false)
+        setTokenData(null)
+        setShowCancelConfirm(false)
+        
+        // Update patient data in localStorage
+        const updatedPatientData = {
+          ...patientData,
+          tokenStatus: "Registered",
+          tokenNumber: null
+        }
+        localStorage.setItem('patientData', JSON.stringify(updatedPatientData))
+        
+        alert('Token cancelled successfully!')
+      } else {
+        setLocationError(data.message || 'Failed to cancel token')
+      }
+    } catch (error) {
+      console.error('Token cancellation error:', error)
+      setLocationError('Network error. Please try again.')
+    } finally {
+      setGeneratingToken(false)
+    }
+  }
+
   // Haversine formula to calculate distance
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
     const R = 6371 // Radius of the Earth in kilometers
@@ -564,6 +673,17 @@ export default function LocationTracker({ patientData }) {
           </div>
           <div className="mt-4 text-center text-sm text-gray-600">
             Show this token number at the hospital reception desk.
+          </div>
+          
+          <div className="mt-4 flex justify-center">
+            <Button 
+              onClick={() => setShowCancelConfirm(true)}
+              variant="outline"
+              className="text-red-600 border-red-300 hover:bg-red-50"
+              size="sm"
+            >
+              Cancel Token
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -706,11 +826,28 @@ export default function LocationTracker({ patientData }) {
               )}
 
               {distance !== null && distance > 100 && (
-                <div className="flex items-center p-3 bg-yellow-50 rounded-lg">
-                  <AlertCircle className="w-4 h-4 text-yellow-600 mr-2" />
-                  <span className="text-yellow-800 font-medium">
-                    You need to get closer to the hospital to generate a token.
-                  </span>
+                <div className="space-y-3">
+                  <div className="flex items-center p-3 bg-yellow-50 rounded-lg">
+                    <AlertCircle className="w-4 h-4 text-yellow-600 mr-2" />
+                    <span className="text-yellow-800 font-medium">
+                      You need to get closer to the hospital to generate a token.
+                    </span>
+                  </div>
+                  
+                  {/* QR Scanner Option */}
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-blue-800 text-sm mb-2">
+                      Can't get close enough? Use the QR code at the hospital reception.
+                    </p>
+                    <Button 
+                      onClick={() => setShowQRScanner(true)}
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                    >
+                      Use QR Code Instead
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
@@ -851,6 +988,120 @@ export default function LocationTracker({ patientData }) {
               ) : (
                 <span>Start location tracking to see your position on the map</span>
               )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* QR Scanner Modal */}
+      {showQRScanner && (
+        <Card className="backdrop-blur-sm bg-white/90 border-0 shadow-xl">
+          <CardHeader>
+            <CardTitle className="flex items-center text-xl">
+              <CheckCircle className="w-5 h-5 mr-2 text-blue-600" />
+              QR Code Scanner
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="text-center py-4">
+              <div className="w-16 h-16 bg-blue-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+                <Map className="w-8 h-8 text-blue-600" />
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">Scan QR Code at Hospital</h3>
+              <p className="text-gray-600 text-sm mb-4">
+                Ask the hospital reception for a QR code or enter the code manually below.
+              </p>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                QR Code or Manual Entry
+              </label>
+              <input
+                type="text"
+                value={qrCodeInput}
+                onChange={(e) => setQrCodeInput(e.target.value)}
+                placeholder="Scan QR code or enter: HOSPITAL|DEPARTMENT|PATIENT_ID"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Format example: General Hospital|Cardiology|PAT123456
+              </p>
+            </div>
+            
+            <div className="flex space-x-3">
+              <Button 
+                onClick={handleQRCodeGeneration}
+                disabled={generatingToken || !qrCodeInput.trim()}
+                className="flex-1 bg-blue-600 hover:bg-blue-700"
+              >
+                {generatingToken ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  "Generate Token"
+                )}
+              </Button>
+              <Button 
+                onClick={() => {
+                  setShowQRScanner(false)
+                  setQrCodeInput('')
+                }}
+                variant="outline"
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Cancel Token Confirmation */}
+      {showCancelConfirm && (
+        <Card className="backdrop-blur-sm bg-white/90 border-0 shadow-xl">
+          <CardHeader>
+            <CardTitle className="flex items-center text-xl">
+              <AlertCircle className="w-5 h-5 mr-2 text-red-600" />
+              Cancel Token Confirmation
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="text-center py-4">
+              <div className="w-16 h-16 bg-red-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+                <AlertCircle className="w-8 h-8 text-red-600" />
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">Cancel Your Token?</h3>
+              <p className="text-gray-600 text-sm mb-4">
+                Are you sure you want to cancel token <strong>{tokenData?.tokenNumber}</strong>? 
+                This action cannot be undone.
+              </p>
+            </div>
+            
+            <div className="flex space-x-3">
+              <Button 
+                onClick={handleCancelToken}
+                disabled={generatingToken}
+                className="flex-1 bg-red-600 hover:bg-red-700"
+              >
+                {generatingToken ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Cancelling...
+                  </>
+                ) : (
+                  "Yes, Cancel Token"
+                )}
+              </Button>
+              <Button 
+                onClick={() => setShowCancelConfirm(false)}
+                variant="outline"
+                className="flex-1"
+              >
+                Keep Token
+              </Button>
             </div>
           </CardContent>
         </Card>
