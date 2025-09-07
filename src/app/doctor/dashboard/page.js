@@ -193,7 +193,29 @@ export default function DoctorDashboard() {
       const data = await response.json()
       
       if (data.success) {
-        alert("Prescription saved successfully!")
+        // Auto-complete token after successful prescription
+        try {
+          const tokenResponse = await fetch('/api/tokens/complete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              tokenNumber: currentToken.tokenNumber,
+              doctorId: doctorInfo.doctorId,
+              prescriptionId: data.prescriptionId
+            })
+          })
+          
+          const tokenData = await tokenResponse.json()
+          
+          if (tokenData.success) {
+            alert("Prescription saved and token completed successfully! The patient's token has been automatically removed from the queue.")
+          } else {
+            alert("Prescription saved successfully, but failed to complete token automatically. Please complete manually if needed.")
+          }
+        } catch (tokenError) {
+          console.error('Auto-token completion error:', tokenError)
+          alert("Prescription saved successfully, but failed to complete token automatically. Please complete manually if needed.")
+        }
         
         // Reset form
         setPrescriptionForm({
