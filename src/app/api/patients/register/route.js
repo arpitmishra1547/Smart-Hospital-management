@@ -7,25 +7,62 @@ export async function POST(request) {
     const client = await clientPromise;
     const db = client.db("hospital-management");
 
-    // Validate required fields
-    const requiredFields = [
-      'fullName', 'dateOfBirth', 'age', 'gender', 'mobileNumber', 
-      'aadhaarNumber', 'address', 'city', 'hospitalName', 'department',
-      'hospitalCoordinates'
-    ];
-
-    for (const field of requiredFields) {
-      if (!patientData[field]) {
-        return NextResponse.json({ 
-          success: false, 
-          message: `Missing required field: ${field}` 
-        }, { status: 400 });
+    // Check if this is a chatbot registration (simpler format)
+    const isChatbotRegistration = patientData.name && !patientData.fullName;
+    
+    let requiredFields, processedData;
+    
+    if (isChatbotRegistration) {
+      // Chatbot registration - simpler validation
+      requiredFields = ['name', 'age', 'gender', 'mobile', 'department', 'hospital'];
+      
+      for (const field of requiredFields) {
+        if (!patientData[field]) {
+          return NextResponse.json({ 
+            success: false, 
+            message: `Missing required field: ${field}` 
+          }, { status: 400 });
+        }
       }
+      
+      // Convert chatbot format to standard format
+      processedData = {
+        fullName: patientData.name,
+        age: parseInt(patientData.age),
+        gender: patientData.gender,
+        mobileNumber: patientData.mobile,
+        department: patientData.department,
+        hospitalName: patientData.hospital,
+        // Default values for chatbot registration
+        dateOfBirth: '',
+        aadhaarNumber: `TEMP-${Date.now()}`, // Temporary Aadhaar for chatbot
+        address: 'Not provided',
+        city: 'Bhopal',
+        hospitalCoordinates: { lat: 23.2599, lng: 77.4126 } // AIIMS Bhopal coords
+      };
+    } else {
+      // Full registration - original validation
+      requiredFields = [
+        'fullName', 'dateOfBirth', 'age', 'gender', 'mobileNumber', 
+        'aadhaarNumber', 'address', 'city', 'hospitalName', 'department',
+        'hospitalCoordinates'
+      ];
+
+      for (const field of requiredFields) {
+        if (!patientData[field]) {
+          return NextResponse.json({ 
+            success: false, 
+            message: `Missing required field: ${field}` 
+          }, { status: 400 });
+        }
+      }
+      
+      processedData = patientData;
     }
 
     // Check if mobile number already exists
     const existingPatient = await db.collection("patients_profile").findOne({ 
-      mobileNumber: patientData.mobileNumber 
+      mobileNumber: processedData.mobileNumber 
     });
 
     if (existingPatient) {
@@ -35,21 +72,23 @@ export async function POST(request) {
       }, { status: 400 });
     }
 
-    // Check if Aadhaar number already exists
-    const existingAadhaar = await db.collection("patients_profile").findOne({ 
-      aadhaarNumber: patientData.aadhaarNumber 
-    });
+    // Check if Aadhaar number already exists (skip for chatbot temp Aadhaar)
+    if (!isChatbotRegistration) {
+      const existingAadhaar = await db.collection("patients_profile").findOne({ 
+        aadhaarNumber: processedData.aadhaarNumber 
+      });
 
-    if (existingAadhaar) {
-      return NextResponse.json({ 
-        success: false, 
-        message: "Patient with this Aadhaar number already exists" 
-      }, { status: 400 });
+      if (existingAadhaar) {
+        return NextResponse.json({ 
+          success: false, 
+          message: "Patient with this Aadhaar number already exists" 
+        }, { status: 400 });
+      }
     }
 
     // Create patient document
     const patient = {
-      ...patientData,
+      ...processedData,
       patientId: `P${Date.now()}${Math.random().toString(36).substr(2, 5).toUpperCase()}`,
       status: "Registered",
       tokenStatus: "Token Pending",
@@ -64,24 +103,26 @@ export async function POST(request) {
     if (result.insertedId) {
       // Save to patients_mobileNumbers collection for quick lookup
       await db.collection("patients_mobileNumbers").insertOne({ 
-        mobileNumber: patientData.mobileNumber,
+        mobileNumber: processedData.mobileNumber,
         patientId: patient.patientId,
         createdAt: new Date()
       });
 
-      // Save to patients_aadhaar collection for Aadhaar lookup
-      await db.collection("patients_aadhaar").insertOne({ 
-        aadhaarNumber: patientData.aadhaarNumber,
-        patientId: patient.patientId,
-        createdAt: new Date()
-      });
+      // Save to patients_aadhaar collection for Aadhaar lookup (skip for chatbot)
+      if (!isChatbotRegistration) {
+        await db.collection("patients_aadhaar").insertOne({ 
+          aadhaarNumber: processedData.aadhaarNumber,
+          patientId: patient.patientId,
+          createdAt: new Date()
+        });
+      }
 
       // Save hospital location data
       await db.collection("hospital_locations").insertOne({
-        hospitalName: patientData.hospitalName,
-        city: patientData.city,
-        coordinates: patientData.hospitalCoordinates,
-        department: patientData.department,
+        hospitalName: processedData.hospitalName,
+        city: processedData.city,
+        coordinates: processedData.hospitalCoordinates,
+        department: processedData.department,
         patientId: patient.patientId,
         createdAt: new Date()
       });
