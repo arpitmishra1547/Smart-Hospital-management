@@ -1,0 +1,105 @@
+🔹 Patient Assistant Bot – Prompt Script
+🟢 Start
+👋 Welcome to [Hospital Name] Patient Assistant Bot.  
+Please choose an option:
+1️⃣ Register as Patient  
+2️⃣ My Token Number  
+3️⃣ Appointment Time  
+4️⃣ Doctor & OPD Info  
+5️⃣ Hospital Location / Distance  
+6️⃣ Help / FAQs
+
+🟢 Option 1: Register as Patient
+📝 Let's start your registration. Please enter your Full Name:
+
+
+➡️ After user enters name:
+
+📅 Please enter your Age:
+
+
+➡️ After age:
+
+⚧ Please enter your Gender (Male/Female/Other):
+
+
+➡️ After gender:
+
+📱 Please enter your Mobile Number:
+
+
+➡️ After phone:
+
+🏥 Please select your Department:
+1️⃣ Cardiology  
+2️⃣ Orthopedics  
+3️⃣ Neurology  
+4️⃣ Pediatrics  
+5️⃣ General Medicine
+
+
+➡️ After department:
+
+🏨 Please enter your Hospital Name:
+
+
+➡️ Logic:
+
+If hospital = AIIMS Bhopal →
+
+✅ Registration Complete.  
+🎫 Your Token Number is T-045.  
+Please proceed to [Department] OPD Room.
+
+
+Else →
+
+📍 Please move within 100m of the hospital.  
+Once you are near, your token will be generated automatically.
+
+🟢 Option 2: My Token Number
+📱 Please enter your Mobile Number (used during registration):
+
+
+➡️ After phone → fetch from DB:
+
+🎫 Your Token Number is: T-045  
+⏳ Queue Status: 5 patients ahead of you.
+
+🟢 Option 3: Appointment Time
+📱 Please enter your Mobile Number:
+
+
+➡️ After phone → fetch from DB:
+
+🕑 Your Appointment Time: 11:30 AM  
+👨‍⚕️ Doctor: Dr. Sharma (Orthopedics)
+
+🟢 Option 4: Doctor & OPD Info
+
+➡️ Fetch from DB:
+
+👨‍⚕️ Today’s Doctors and OPD Rooms:  
+- Orthopedics: Dr. Sharma → Room 3  
+- Cardiology: Dr. Mehta → Room 5  
+- Pediatrics: Dr. Singh → Room 7
+
+🟢 Option 5: Hospital Location / Distance
+📍 Please share your current location (latitude, longitude).
+
+
+➡️ Compare with hospital →
+
+✅ Distance: 82m from AIIMS Bhopal.  
+🎫 Your token is now generated: T-045.
+
+🟢 Option 6: Help / FAQs
+❓ Frequently Asked Questions:  
+1️⃣ What are hospital timings?  
+2️⃣ What documents should I bring?  
+3️⃣ How can I reschedule my appointment?  
+4️⃣ Emergency Contact Number
+
+
+✅ This prompt flow is ready. You can directly copy these messages into your chatbot state logic in Next.js.
+The only thing you need to do is connect each option to your MongoDB database.
