@@ -28,12 +28,12 @@ export default function PatientChatbot() {
       type: 'bot',
       content: '👋 Welcome to SmartCare Hospital Patient Assistant Bot.\n\nPlease choose an option:',
       options: [
-        { id: 1, text: '1️⃣ Register as Patient', value: 'register' },
-        { id: 2, text: '2️⃣ My Token Number', value: 'token' },
-        { id: 3, text: '3️⃣ Appointment Time', value: 'appointment' },
-        { id: 4, text: '4️⃣ Doctor & OPD Info', value: 'doctors' },
-        { id: 5, text: '5️⃣ Hospital Location / Distance', value: 'location' },
-        { id: 6, text: '6️⃣ Help / FAQs', value: 'help' }
+        { id: 'register', text: '1️⃣ Register as Patient', value: 'register' },
+        { id: 'token', text: '2️⃣ My Token Number', value: 'token' },
+        { id: 'appointment', text: '3️⃣ Appointment Time', value: 'appointment' },
+        { id: 'doctors', text: '4️⃣ Doctor & OPD Info', value: 'doctors' },
+        { id: 'location', text: '5️⃣ Hospital Location / Distance', value: 'location' },
+        { id: 'help', text: '6️⃣ Help / FAQs', value: 'help' }
       ]
     }
   ])
@@ -52,11 +52,15 @@ export default function PatientChatbot() {
   }, [messages])
 
   const addMessage = (type, content, options = null) => {
+    const messageId = Date.now() + Math.random()
     const newMessage = {
-      id: Date.now(),
+      id: messageId,
       type,
       content,
-      options,
+      options: options?.map((option, index) => ({
+        ...option,
+        id: `${option.id}-${messageId}-${index}`
+      })) || null,
       timestamp: new Date().toLocaleTimeString()
     }
     setMessages(prev => [...prev, newMessage])
@@ -363,12 +367,12 @@ export default function PatientChatbot() {
       setRegistrationData({})
       addUserMessage('🏠 Back to Main Menu')
       addBotMessage('👋 Welcome back! Please choose an option:', [
-        { id: 1, text: '1️⃣ Register as Patient', value: 'register' },
-        { id: 2, text: '2️⃣ My Token Number', value: 'token' },
-        { id: 3, text: '3️⃣ Appointment Time', value: 'appointment' },
-        { id: 4, text: '4️⃣ Doctor & OPD Info', value: 'doctors' },
-        { id: 5, text: '5️⃣ Hospital Location / Distance', value: 'location' },
-        { id: 6, text: '6️⃣ Help / FAQs', value: 'help' }
+        { id: 'register', text: '1️⃣ Register as Patient', value: 'register' },
+        { id: 'token', text: '2️⃣ My Token Number', value: 'token' },
+        { id: 'appointment', text: '3️⃣ Appointment Time', value: 'appointment' },
+        { id: 'doctors', text: '4️⃣ Doctor & OPD Info', value: 'doctors' },
+        { id: 'location', text: '5️⃣ Hospital Location / Distance', value: 'location' },
+        { id: 'help', text: '6️⃣ Help / FAQs', value: 'help' }
       ])
       return
     }
