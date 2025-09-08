@@ -23,6 +23,7 @@ import {
   X,
 } from "lucide-react"
 import { useState, useEffect } from "react"
+import PatientChatbot from "@/components/PatientChatbot"
 
 export default function SmartHospitalLandingPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -530,6 +531,9 @@ export default function SmartHospitalLandingPage() {
           </div>
         </div>
       </footer>
+      
+      {/* Patient Assistant Chatbot */}
+      <PatientChatbot />
     </div>
   )
 }

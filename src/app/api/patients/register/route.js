@@ -127,15 +127,55 @@ export async function POST(request) {
         createdAt: new Date()
       });
 
+      // Generate token for AIIMS Bhopal registrations from chatbot
+      let tokenNumber = null;
+      if (isChatbotRegistration && processedData.hospitalName.toLowerCase().includes('aiims') && processedData.hospitalName.toLowerCase().includes('bhopal')) {
+        try {
+          const counter = await db.collection('counters').findOneAndUpdate(
+            { _id: 'token' },
+            { $inc: { sequence: 1 } },
+            { upsert: true, returnDocument: 'after' }
+          );
+          
+          tokenNumber = `T-${String(counter.sequence).padStart(3, '0')}`;
+          
+          // Update patient with token
+          await db.collection("patients_profile").updateOne(
+            { patientId: patient.patientId },
+            { 
+              $set: { 
+                tokenNumber: tokenNumber,
+                tokenStatus: "Token Generated",
+                tokenGeneratedAt: new Date()
+              }
+            }
+          );
+          
+          // Save token record
+          await db.collection("tokens").insertOne({
+            tokenNumber,
+            patientId: patient.patientId,
+            department: processedData.department,
+            hospitalName: processedData.hospitalName,
+            date: new Date().toISOString().split('T')[0],
+            status: 'Active',
+            generatedAt: new Date()
+          });
+        } catch (tokenError) {
+          console.error('Token generation error:', tokenError);
+        }
+      }
+
       return NextResponse.json({ 
         success: true, 
         message: "Patient registered successfully",
+        tokenNumber: tokenNumber,
         patient: {
           patientId: patient.patientId,
           fullName: patient.fullName,
           mobileNumber: patient.mobileNumber,
           status: patient.status,
-          tokenStatus: patient.tokenStatus
+          tokenStatus: tokenNumber ? "Token Generated" : patient.tokenStatus
         }
       });
     } else {
