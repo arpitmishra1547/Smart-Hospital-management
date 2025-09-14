@@ -243,20 +243,20 @@ export default function DoctorDashboard() {
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+          <div className="flex justify-between items-center h-16 min-h-16">
+            <div className="flex items-center space-x-3 min-w-0 flex-1">
+              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
                 <Stethoscope className="w-6 h-6 text-white" />
               </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">Doctor Dashboard</h1>
-                <p className="text-sm text-gray-600">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate">Doctor Dashboard</h1>
+                <p className="text-xs sm:text-sm text-gray-600 truncate">
                   {doctorInfo ? `${doctorInfo.name} • ${doctorInfo.department}` : 'Loading...'}
                 </p>
               </div>
             </div>
             
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
               <button className="relative p-2 text-gray-600 hover:text-gray-900">
                 <Bell className="w-6 h-6" />
                 <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
@@ -272,8 +272,8 @@ export default function DoctorDashboard() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid lg:grid-cols-4 gap-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-8">
           {/* Sidebar Navigation */}
           <div className="lg:col-span-1">
             <Card className="backdrop-blur-sm bg-white/80 border-0 shadow-xl">
@@ -329,7 +329,7 @@ export default function DoctorDashboard() {
           </div>
 
           {/* Main Content */}
-          <div className="lg:col-span-3 space-y-8">
+          <div className="lg:col-span-3 space-y-4 lg:space-y-8">
             {/* Token Input Section */}
             <Card className="backdrop-blur-sm bg-white/80 border-0 shadow-xl">
               <CardHeader>
@@ -380,14 +380,14 @@ export default function DoctorDashboard() {
                 <CardContent>
                   <div className="space-y-6">
                     {/* Patient Header */}
-                    <div className="flex items-center space-x-4 pb-4 border-b">
-                      <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 pb-4 border-b">
+                      <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
                         <User className="w-8 h-8 text-blue-600" />
                       </div>
-                      <div className="flex-1">
-                        <h3 className="text-xl font-bold text-gray-900">{currentPatient.fullName || currentPatient.name}</h3>
-                        <p className="text-gray-600">Patient ID: {currentPatient.patientId || currentPatient.id}</p>
-                        <p className="text-sm text-gray-500">Token: {currentToken?.tokenNumber}</p>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg sm:text-xl font-bold text-gray-900 truncate">{currentPatient.fullName || currentPatient.name}</h3>
+                        <p className="text-sm sm:text-base text-gray-600 truncate">Patient ID: {currentPatient.patientId || currentPatient.id}</p>
+                        <p className="text-xs sm:text-sm text-gray-500 truncate">Token: {currentToken?.tokenNumber}</p>
                       </div>
                       <div className="text-right">
                         <div className="text-sm text-gray-500">Visit Date</div>
@@ -396,7 +396,7 @@ export default function DoctorDashboard() {
                     </div>
 
                     {/* Patient Details Grid */}
-                    <div className="grid lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
                       {/* Basic Information */}
                       <div className="space-y-4">
                         <h4 className="font-semibold text-gray-900 border-b pb-2">Basic Information</h4>
@@ -411,7 +411,7 @@ export default function DoctorDashboard() {
                           </div>
                           <div className="flex justify-between">
                             <span className="font-medium text-gray-600">Blood Group:</span>
-                            <span className="text-gray-900 font-medium text-red-600">{currentPatient.bloodGroup || "Not specified"}</span>
+                            <span className="text-red-600 font-medium">{currentPatient.bloodGroup || "Not specified"}</span>
                           </div>
                           <div className="flex justify-between">
                             <span className="font-medium text-gray-600">Marital Status:</span>

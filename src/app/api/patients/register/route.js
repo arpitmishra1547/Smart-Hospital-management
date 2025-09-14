@@ -10,8 +10,7 @@ export async function POST(request) {
     // Validate required fields
     const requiredFields = [
       'fullName', 'dateOfBirth', 'age', 'gender', 'mobileNumber', 
-      'aadhaarNumber', 'address', 'city', 'hospitalName', 'department',
-      'hospitalCoordinates'
+      'aadhaarNumber', 'address', 'city', 'hospitalName', 'department'
     ];
 
     for (const field of requiredFields) {
@@ -47,9 +46,28 @@ export async function POST(request) {
       }, { status: 400 });
     }
 
+    // Determine hospital coordinates for patient profile
+    let hospitalCoordinates = patientData.hospitalCoordinates;
+    
+    // For AIIMS Bhopal, provide default coordinates since it's always within 100m
+    if (patientData.hospitalName === "All India Institute of Medical Sciences (AIIMS)" && 
+        patientData.hospitalCity === "Bhopal") {
+      hospitalCoordinates = {
+        lat: 23.251797808801957, // Bhopal coordinates
+        lng: 77.46620424743277
+      };
+    } else if (!hospitalCoordinates) {
+      // If no coordinates provided and not AIIMS Bhopal, provide default coordinates
+      hospitalCoordinates = {
+        lat: 23.251797808801957, // Default coordinates
+        lng: 77.46620424743277
+      };
+    }
+
     // Create patient document
     const patient = {
       ...patientData,
+      hospitalCoordinates: hospitalCoordinates,
       patientId: `P${Date.now()}${Math.random().toString(36).substr(2, 5).toUpperCase()}`,
       status: "Registered",
       tokenStatus: "Token Pending",
@@ -79,8 +97,9 @@ export async function POST(request) {
       // Save hospital location data
       await db.collection("hospital_locations").insertOne({
         hospitalName: patientData.hospitalName,
+        hospitalCity: patientData.hospitalCity,
         city: patientData.city,
-        coordinates: patientData.hospitalCoordinates,
+        coordinates: hospitalCoordinates,
         department: patientData.department,
         patientId: patient.patientId,
         createdAt: new Date()

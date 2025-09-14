@@ -138,11 +138,11 @@ export default function SmartHospitalLandingPage() {
         <div className="absolute inset-0 bg-[url('/abstract-medical-pattern.png')] opacity-5"></div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="animate-on-scroll opacity-0 transition-all duration-1000">
-            <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
               Smart Hospital. <br />
               <span className="text-blue-600">Smarter Healthcare.</span>
             </h1>
-            <p className="text-xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-lg sm:text-xl text-gray-600 mb-8 sm:mb-12 max-w-3xl mx-auto leading-relaxed">
               No waiting lines, digital token system, and seamless hospital experience. Experience the future of
               healthcare management today.
             </p>
@@ -185,7 +185,7 @@ export default function SmartHospitalLandingPage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
             <Card className="animate-on-scroll opacity-0 hover:shadow-xl transition-all duration-300 border-0 shadow-lg">
               <CardContent className="p-8 text-center">
                 <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -241,7 +241,7 @@ export default function SmartHospitalLandingPage() {
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">Simple steps to experience smarter healthcare</p>
           </div>
 
-          <div className="grid md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
             <div className="text-center animate-on-scroll opacity-0">
               <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 text-white text-2xl font-bold">
                 1
@@ -292,7 +292,7 @@ export default function SmartHospitalLandingPage() {
       {/* About Section */}
       <section id="about" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
             <div className="animate-on-scroll opacity-0">
               <h2 className="text-4xl font-bold text-gray-900 mb-6">Our Vision for Digital Healthcare</h2>
               <p className="text-lg text-gray-600 mb-6 leading-relaxed">
@@ -341,7 +341,7 @@ export default function SmartHospitalLandingPage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
             <Card className="animate-on-scroll opacity-0 border-0 shadow-lg">
               <CardContent className="p-8">
                 <div className="flex items-center mb-4">
@@ -457,7 +457,7 @@ export default function SmartHospitalLandingPage() {
       {/* Footer */}
       <footer id="contact" className="bg-gray-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="grid md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
             {/* Hospital Info */}
             <div className="md:col-span-2">
               <div className="flex items-center space-x-2 mb-6">

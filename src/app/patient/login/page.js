@@ -91,7 +91,7 @@ export default function PatientLoginPage() {
   if (step === "login") {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center p-4">
-        <div className="max-w-4xl w-full grid lg:grid-cols-2 gap-8 items-center">
+        <div className="max-w-4xl w-full grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-center">
           {/* Left Side - Illustration & Branding */}
           <div className="text-center lg:text-left">
             <div className="mb-8">
@@ -177,7 +177,7 @@ export default function PatientLoginPage() {
   if (step === "otp") {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center p-4">
-        <Card className="backdrop-blur-sm bg-white/80 border-0 shadow-xl max-w-md w-full">
+        <Card className="backdrop-blur-sm bg-white/80 border-0 shadow-xl max-w-md w-full mx-auto">
           <CardContent className="p-8">
             <div className="text-center mb-8">
               <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />

@@ -15,11 +15,12 @@ import {
   User
 } from "lucide-react"
 
-export default function LocationTracker({ patientData }) {
+export default function LocationTracker({ patientData, prescriptionCompleted = false }) {
   // Debug log to see what data is being passed
   useEffect(() => {
     console.log('LocationTracker received patientData:', patientData)
-  }, [patientData])
+    console.log('LocationTracker prescriptionCompleted:', prescriptionCompleted)
+  }, [patientData, prescriptionCompleted])
 
   const [currentLocation, setCurrentLocation] = useState(null)
   const [locationError, setLocationError] = useState("")
@@ -136,8 +137,8 @@ export default function LocationTracker({ patientData }) {
           // Update map
           updateMap(latitude, longitude)
           
-          // Check if patient is within 100 meters
-          if (dist <= 100 && !tokenGenerated) {
+          // Check if patient is within 100 meters (skip distance check for AIIMS Bhopal)
+          if ((isTestHospital || dist <= 100) && !tokenGenerated) {
             handleTokenGeneration(latitude, longitude)
           }
         }
@@ -253,8 +254,8 @@ export default function LocationTracker({ patientData }) {
             // Update map
             updateMap(latitude, longitude)
             
-            // Check if patient is within 100 meters
-            if (dist <= 100 && !tokenGenerated) {
+            // Check if patient is within 100 meters (skip distance check for AIIMS Bhopal)
+            if ((isTestHospital || dist <= 100) && !tokenGenerated) {
               handleTokenGeneration(latitude, longitude)
             }
           }
@@ -410,56 +411,66 @@ export default function LocationTracker({ patientData }) {
     }
   }
 
-  // Handle Test Hospital token generation (always within 100m)
+  // Handle Bhopal AIIMS token generation (always within 100m)
   const handleTestHospitalTokenGeneration = async () => {
     if (generatingToken || tokenGenerated) return
     
     setGeneratingToken(true)
+    setLocationError("")
+    
+    console.log('AIIMS Bhopal token generation - Patient data:', patientData)
     
     try {
-      // Use mock coordinates for Test Hospital (doesn't matter as it's always within 100m)
-      const mockLat = 20.5937
-      const mockLng = 78.9629
-      
-      const response = await fetch('/api/patients/generate-token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          patientId: patientData.patientId,
-          currentLat: mockLat,
-          currentLng: mockLng
-        })
-      })
-      
-      const data = await response.json()
-      
-      if (data.success) {
-        setTokenGenerated(true)
-        setTokenData(data.token)
-        
-        // Show success notification
-        if ('Notification' in window && Notification.permission === 'granted') {
-          new Notification('Test Hospital Token Generated!', {
-            body: `Your token ${data.token.tokenNumber} has been generated for ${data.token.department} at Test Hospital`,
-            icon: '/favicon.ico'
+      // Get patient's current location for AIIMS Bhopal
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords
+          
+          const response = await fetch('/api/patients/generate-token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              patientId: patientData.patientId,
+              currentLat: latitude,
+              currentLng: longitude
+            })
           })
+          
+          const data = await response.json()
+          
+          if (data.success) {
+            setTokenGenerated(true)
+            setTokenData(data.token)
+            
+            // Show success notification
+            if ('Notification' in window && Notification.permission === 'granted') {
+              new Notification('AIIMS Bhopal Token Generated!', {
+                body: `Your token ${data.token.tokenNumber} has been generated for ${data.token.department} at AIIMS Bhopal`,
+                icon: '/favicon.ico'
+              })
+            }
+            
+            // Update patient data in localStorage
+            const updatedPatientData = {
+              ...patientData,
+              tokenStatus: "Token Generated",
+              tokenNumber: data.token.tokenNumber
+            }
+            localStorage.setItem('patientData', JSON.stringify(updatedPatientData))
+            
+            alert('AIIMS Bhopal token generated successfully! Your token number is: ' + data.token.tokenNumber)
+          } else {
+            console.error('AIIMS Bhopal token generation failed:', data.message)
+            setLocationError(data.message || 'Failed to generate token for AIIMS Bhopal')
+          }
+        },
+        (error) => {
+          console.error('Location error:', error)
+          setLocationError('Unable to get your location. Please enable location access and try again.')
         }
-        
-        // Update patient data in localStorage
-        const updatedPatientData = {
-          ...patientData,
-          tokenStatus: "Token Generated",
-          tokenNumber: data.token.tokenNumber
-        }
-        localStorage.setItem('patientData', JSON.stringify(updatedPatientData))
-        
-        alert('Test Hospital token generated successfully! Your token number is: ' + data.token.tokenNumber)
-      } else {
-        console.error('Test Hospital token generation failed:', data.message)
-        setLocationError(data.message || 'Failed to generate token for Test Hospital')
-      }
+      )
     } catch (error) {
-      console.error('Test Hospital token generation error:', error)
+      console.error('AIIMS Bhopal token generation error:', error)
       setLocationError('Network error. Please try again.')
     } finally {
       setGeneratingToken(false)
@@ -640,20 +651,20 @@ export default function LocationTracker({ patientData }) {
     )
   }
 
-  // Show existing token if patient already has one
-  if (patientData?.tokenNumber && patientData?.tokenStatus === "Token Generated") {
+  // Show existing token if patient already has one and prescription is not completed
+  if (patientData?.tokenNumber && patientData?.tokenStatus === "Token Generated" && !prescriptionCompleted) {
     return (
       <Card className="backdrop-blur-sm bg-white/80 border-0 shadow-xl">
         <CardHeader>
-          <CardTitle className="flex items-center text-xl text-green-600">
-            <CheckCircle className="w-6 h-6 mr-2" />
+          <CardTitle className="flex items-center text-lg sm:text-xl text-green-600">
+            <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 mr-2" />
             Your Current Token
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="bg-gradient-to-r from-green-500 to-blue-500 rounded-xl p-6 text-white text-center">
-            <div className="text-4xl font-bold mb-2">{patientData.tokenNumber}</div>
-            <p className="text-green-100 text-lg mb-4">
+          <div className="bg-gradient-to-r from-green-500 to-blue-500 rounded-xl p-4 sm:p-6 text-white text-center">
+            <div className="text-3xl sm:text-4xl font-bold mb-2">{patientData.tokenNumber}</div>
+            <p className="text-green-100 text-base sm:text-lg mb-4">
               {patientData.department || 'General'} • {patientData.hospitalName || 'Hospital'}
             </p>
             <div className="space-y-2 text-sm">
@@ -691,10 +702,11 @@ export default function LocationTracker({ patientData }) {
   }
 
   // Show registration prompt if hospital coordinates are missing
-  // Check if this is Test Hospital
-  const isTestHospital = patientData?.hospitalName === "Test Hospital"
+  // Check if this is Bhopal AIIMS hospital (always within 100m for testing)
+  const isTestHospital = patientData?.hospitalName === "All India Institute of Medical Sciences (AIIMS)" && 
+                        patientData?.hospitalCity === "Bhopal"
   
-  if (!patientData?.hospitalCoordinates && !isTestHospital) {
+  if (!patientData?.hospitalCoordinates) {
     return (
       <Card className="backdrop-blur-sm bg-white/80 border-0 shadow-xl">
         <CardHeader>
@@ -728,13 +740,13 @@ export default function LocationTracker({ patientData }) {
 
   return (
     <div className="space-y-6">
-      {/* Test Hospital Token Generation Card */}
+      {/* Bhopal AIIMS Token Generation Card */}
       {isTestHospital && !tokenGenerated && (
         <Card className="backdrop-blur-sm bg-white/80 border-0 shadow-xl">
           <CardHeader>
             <CardTitle className="flex items-center text-xl">
               <CheckCircle className="w-5 h-5 mr-2 text-green-600" />
-              🧪 Test Hospital - Token Generation
+              🏥 AIIMS Bhopal - Token Generation
             </CardTitle>
           </CardHeader>
           <CardContent className="text-center py-6">
@@ -743,12 +755,12 @@ export default function LocationTracker({ patientData }) {
                 <CheckCircle className="w-8 h-8 text-green-600" />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900 mb-2">Test Hospital Selected</h3>
+                <h3 className="font-semibold text-gray-900 mb-2">AIIMS Bhopal Selected</h3>
                 <p className="text-gray-600 text-sm mb-4">
-                  You have selected Test Hospital. Click the button below to generate your token for testing purposes.
+                  You have selected All India Institute of Medical Sciences (AIIMS) Bhopal. Click the button below to generate your token.
                 </p>
                 <p className="text-green-700 text-xs mb-4">
-                  Note: Test Hospital is always considered within 100m of your location for testing.
+                  Note: AIIMS Bhopal is always considered within 100m of your location for token generation.
                 </p>
               </div>
               <Button 

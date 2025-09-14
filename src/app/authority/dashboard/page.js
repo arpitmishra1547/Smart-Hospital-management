@@ -559,15 +559,15 @@ function AuthorityDashboardPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-blue-50 to-green-50">
-      <div className="grid lg:grid-cols-[18rem_1fr] min-h-screen">
+      <div className="grid grid-cols-1 lg:grid-cols-[18rem_1fr] min-h-screen">
         <Sidebar />
-        <main className="p-4 lg:p-8 space-y-8">
+        <main className="p-4 lg:p-8 space-y-4 lg:space-y-8">
           <header className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
             <div>
               <h1 className="text-3xl md:text-4xl font-bold gradient-text">Authority Dashboard</h1>
               <p className="text-gray-600 mt-1">Smart overview of hospital operations</p>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-gray-900">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-gray-900">
               <StatCard title="Total Patients" value="830" subtitle="↑ 18% vs last month" icon={Users2} color="blue" />
               <StatCard title="Total Doctors" value={doctors.length.toString()} subtitle={`Active ${doctors.filter(d => d.status === 'Active').length}`} icon={Stethoscope} color="green" />
               <StatCard title="Departments" value={departments.length.toString()} subtitle={`${opdRooms.length} OPD Rooms`} icon={Building2} color="purple" />
@@ -606,7 +606,7 @@ function AuthorityDashboardPage() {
           {/* Dashboard Tab Content */}
           {activeTab === "dashboard" && (
             <>
-              <section className="grid lg:grid-cols-2 gap-6">
+              <section className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
             <div className="bg-white/70 backdrop-blur-md rounded-2xl p-6 border border-gray-200">
               <h3 className="font-semibold mb-4 text-gray-900">Doctors by Specialization</h3>
               <div className="h-64">
@@ -776,7 +776,7 @@ function AuthorityDashboardPage() {
             </div>
           </section>
 
-          <section id="patients" className="grid lg:grid-cols-3 gap-6">
+          <section id="patients" className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
             <div className="bg-white/70 backdrop-blur-md rounded-2xl p-6 border border-gray-200 lg:col-span-2">
               <h3 className="font-semibold mb-4 text-gray-900">Patient Growth</h3>
               <div className="h-64">
@@ -810,7 +810,7 @@ function AuthorityDashboardPage() {
             </div>
           </section>
 
-          <section id="resources" className="grid lg:grid-cols-2 gap-6">
+          <section id="resources" className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
             <div className="bg-white/70 backdrop-blur-md rounded-2xl p-6 border border-gray-200">
               <h3 className="font-semibold mb-4 text-gray-900">Beds and Occupancy</h3>
               <div className="grid grid-cols-3 gap-4">
@@ -844,7 +844,7 @@ function AuthorityDashboardPage() {
             </div>
           </section>
 
-          <section id="analytics" className="grid lg:grid-cols-3 gap-6">
+          <section id="analytics" className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
             <div className="bg-white/70 backdrop-blur-md rounded-2xl p-6 border border-gray-200">
               <h3 className="font-semibold mb-2 text-gray-900">AI Insights</h3>
               <ul className="text-sm text-gray-700 list-disc pl-5 space-y-1">
@@ -874,7 +874,7 @@ function AuthorityDashboardPage() {
 
               <section className="bg-white/70 backdrop-blur-md rounded-2xl p-6 border border-gray-200">
                 <h3 className="font-semibold mb-4 text-gray-900">Real-Time Alerts</h3>
-                <div className="grid md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   {[
                     { title: "High load in Pediatrics", severity: "critical" },
                     { title: "ICU beds below 10%", severity: "warning" },

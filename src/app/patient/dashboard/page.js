@@ -170,6 +170,8 @@ export default function PatientDashboard() {
 
   const [medicalRecords, setMedicalRecords] = useState([])
   const [loadingHistory, setLoadingHistory] = useState(false)
+  const [hasCompletedPrescription, setHasCompletedPrescription] = useState(false)
+  const [prescriptionCompleted, setPrescriptionCompleted] = useState(false)
 
   const fetchMedicalHistory = async () => {
     if (!patientData?.patientId) return
@@ -180,7 +182,7 @@ export default function PatientDashboard() {
       const data = await response.json()
       
       if (data.success) {
-        setMedicalRecords(data.prescriptions.map(prescription => ({
+        const records = data.prescriptions.map(prescription => ({
           id: prescription._id,
           date: new Date(prescription.createdAt).toISOString().split('T')[0],
           department: prescription.department,
@@ -190,7 +192,13 @@ export default function PatientDashboard() {
           symptoms: prescription.prescription.symptoms,
           notes: prescription.prescription.notes,
           tokenNumber: prescription.tokenNumber
-        })))
+        }))
+        setMedicalRecords(records)
+        
+        // Check if patient has any completed prescriptions (prescription saved by doctor)
+        const hasPrescription = records.length > 0
+        setHasCompletedPrescription(hasPrescription)
+        setPrescriptionCompleted(hasPrescription)
       }
     } catch (error) {
       console.error('Failed to fetch medical history:', error)
@@ -422,22 +430,22 @@ export default function PatientDashboard() {
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+          <div className="flex justify-between items-center h-16 min-h-16">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
                 <User className="w-6 h-6 text-white" />
               </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate">
                   Patient Dashboard
                 </h1>
-                <p className="text-sm text-gray-700">
+                <p className="text-xs sm:text-sm text-gray-700 truncate">
                   Welcome back, {patientData.fullName}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               <div className="relative">
                 <button 
                   onClick={() => setShowNotificationDropdown(!showNotificationDropdown)}
@@ -453,7 +461,7 @@ export default function PatientDashboard() {
                 
                 {/* Notification Dropdown */}
                 {showNotificationDropdown && (
-                  <div className="notification-dropdown absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-96 overflow-y-auto">
+                  <div className="notification-dropdown absolute right-0 top-full mt-2 w-72 sm:w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-96 overflow-y-auto">
                     <div className="p-4 border-b border-gray-200">
                       <h3 className="font-semibold text-gray-900">Notifications</h3>
                     </div>
@@ -522,7 +530,7 @@ export default function PatientDashboard() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         {activeTab === "profile" ? (
           /* Profile View */
           <div className="max-w-2xl mx-auto">
@@ -561,7 +569,7 @@ export default function PatientDashboard() {
                     {/* Basic Information */}
                     <div className="border-b pb-4">
                       <h3 className="text-lg font-semibold mb-4 text-gray-900">Basic Information</h3>
-                      <div className="grid md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             Full Name
@@ -662,7 +670,7 @@ export default function PatientDashboard() {
                     {/* Contact Information */}
                     <div className="border-b pb-4">
                       <h3 className="text-lg font-semibold mb-4 text-gray-900">Contact Information</h3>
-                      <div className="grid md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             Mobile Number
@@ -720,7 +728,7 @@ export default function PatientDashboard() {
                     {/* Address Information */}
                     <div className="border-b pb-4">
                       <h3 className="text-lg font-semibold mb-4 text-gray-900">Address Information</h3>
-                      <div className="grid md:grid-cols-4 gap-4 mb-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             House No
@@ -822,7 +830,7 @@ export default function PatientDashboard() {
                             placeholder="Food allergies, drug allergies, etc."
                           />
                         </div>
-                        <div className="grid md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                               Current Medications
@@ -893,7 +901,7 @@ export default function PatientDashboard() {
                       <p className="text-gray-600">Patient ID: {patientData.id || 'Not assigned'}</p>
                     </div>
                     
-                    <div className="grid md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6">
                       <div className="space-y-4">
                         <h3 className="font-semibold text-gray-900 border-b pb-2">Personal Information</h3>
                         <div className="space-y-3">
@@ -943,58 +951,145 @@ export default function PatientDashboard() {
           </div>
         ) : (
           /* Dashboard View */
-          <div className="grid lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-8">
             {/* Left Column - Main Dashboard */}
-            <div className="lg:col-span-2 space-y-8">
+            <div className="lg:col-span-2 space-y-4 lg:space-y-8">
               {/* Location Tracker */}
-              <LocationTracker patientData={patientData} />
+              <LocationTracker patientData={patientData} prescriptionCompleted={prescriptionCompleted} />
 
-            {/* Expected Time to Meet Doctor Card */}
-            <Card className="backdrop-blur-sm bg-white/80 border-0 shadow-xl">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center text-xl text-gray-900">
-                  <Clock className="w-5 h-5 mr-2 text-purple-600" />
-                  Expected Time to Meet Doctor
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl p-6 text-white">
-                  <div className="text-center">
-                    <div className="text-5xl font-bold mb-2">
-                      {new Date(Date.now() + (Math.floor(Math.random() * 30) + 15) * 60000).toLocaleTimeString('en-US', { 
-                        hour: '2-digit', 
-                        minute: '2-digit',
-                        hour12: true 
-                      })}
-                    </div>
-                    <p className="text-purple-100 text-lg mb-4">
-                      Estimated appointment time
-                    </p>
-                    <div className="flex items-center justify-center space-x-4">
-                      <div className="flex items-center">
-                        <User className="w-5 h-5 mr-2" />
-                        <span className="font-semibold">
-                          {patientData?.specializedDoctor || 'Dr. Sarah Johnson'}
-                        </span>
+            {/* Visit Again Card - Show when prescription is completed */}
+            {prescriptionCompleted ? (
+              <Card className="backdrop-blur-sm bg-white/80 border-0 shadow-xl">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center text-xl text-gray-900">
+                    <Heart className="w-5 h-5 mr-2 text-pink-600" />
+                    Visit Again & Stay Healthy
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="bg-gradient-to-r from-pink-500 to-purple-500 rounded-xl p-6 text-white">
+                    <div className="text-center">
+                      <div className="text-4xl mb-4">🎉</div>
+                      <h3 className="text-2xl font-bold mb-2">
+                        Thank You for Your Visit!
+                      </h3>
+                      <p className="text-pink-100 text-lg mb-4">
+                        Your consultation has been completed successfully
+                      </p>
+                      <div className="space-y-3 text-sm">
+                        <div className="flex items-center justify-center">
+                          <CheckCircle className="w-4 h-4 mr-2" />
+                          <span>Prescription saved and ready for collection</span>
+                        </div>
+                        <div className="flex items-center justify-center">
+                          <FileText className="w-4 h-4 mr-2" />
+                          <span>Medical records updated in your profile</span>
+                        </div>
+                        <div className="flex items-center justify-center">
+                          <Star className="w-4 h-4 mr-2" />
+                          <span>We hope you feel better soon!</span>
+                        </div>
                       </div>
-                      <div className="flex items-center">
-                        <CheckCircle className="w-5 h-5 mr-2" />
-                        <span>Token: {patientData?.tokenNumber || 'A-042'}</span>
-                      </div>
-                    </div>
-                    <div className="mt-3 text-sm text-purple-100">
-                      Approximate wait time: {Math.floor(Math.random() * 30) + 15} minutes
                     </div>
                   </div>
-                </div>
-                <div className="mt-4 text-center text-sm text-gray-600">
-                  Please be present 10 minutes before your expected time.
-                </div>
-              </CardContent>
-            </Card>
+                  <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <div className="flex items-center mb-2">
+                        <Calendar className="w-5 h-5 text-green-600 mr-2" />
+                        <h4 className="font-semibold text-green-800">Book Follow-up</h4>
+                      </div>
+                      <p className="text-sm text-green-700 mb-3">
+                        Schedule your next appointment for continued care
+                      </p>
+                      <Button 
+                        size="sm" 
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                        onClick={() => {
+                          // Scroll to appointment booking section
+                          document.querySelector('[data-section="appointment-booking"]')?.scrollIntoView({ behavior: 'smooth' })
+                        }}
+                      >
+                        <Plus className="w-4 h-4 mr-1" />
+                        Book Follow-up
+                      </Button>
+                    </div>
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <div className="flex items-center mb-2">
+                        <Activity className="w-5 h-5 text-blue-600 mr-2" />
+                        <h4 className="font-semibold text-blue-800">Health Tips</h4>
+                      </div>
+                      <p className="text-sm text-blue-700 mb-3">
+                        Get personalized health recommendations
+                      </p>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        className="border-blue-300 text-blue-700 hover:bg-blue-50"
+                        onClick={() => {
+                          // Scroll to AI symptom checker
+                          document.querySelector('[data-section="symptom-checker"]')?.scrollIntoView({ behavior: 'smooth' })
+                        }}
+                      >
+                        <MessageCircle className="w-4 h-4 mr-1" />
+                        Get Tips
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="mt-4 text-center">
+                    <p className="text-sm text-gray-600">
+                      💊 Don't forget to take your prescribed medications as directed
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              /* Expected Time to Meet Doctor Card - Show when no prescription completed */
+              <Card className="backdrop-blur-sm bg-white/80 border-0 shadow-xl">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center text-xl text-gray-900">
+                    <Clock className="w-5 h-5 mr-2 text-purple-600" />
+                    Expected Time to Meet Doctor
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl p-6 text-white">
+                    <div className="text-center">
+                      <div className="text-5xl font-bold mb-2">
+                        {new Date(Date.now() + (Math.floor(Math.random() * 30) + 15) * 60000).toLocaleTimeString('en-US', { 
+                          hour: '2-digit', 
+                          minute: '2-digit',
+                          hour12: true 
+                        })}
+                      </div>
+                      <p className="text-purple-100 text-lg mb-4">
+                        Estimated appointment time
+                      </p>
+                      <div className="flex items-center justify-center space-x-4">
+                        <div className="flex items-center">
+                          <User className="w-5 h-5 mr-2" />
+                          <span className="font-semibold">
+                            {patientData?.specializedDoctor || 'Dr. Sarah Johnson'}
+                          </span>
+                        </div>
+                        <div className="flex items-center">
+                          <CheckCircle className="w-5 h-5 mr-2" />
+                          <span>Token: {patientData?.tokenNumber || 'A-042'}</span>
+                        </div>
+                      </div>
+                      <div className="mt-3 text-sm text-purple-100">
+                        Approximate wait time: {Math.floor(Math.random() * 30) + 15} minutes
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-4 text-center text-sm text-gray-600">
+                    Please be present 10 minutes before your expected time.
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Appointment Booking Card */}
-            <Card className="backdrop-blur-sm bg-white/80 border-0 shadow-xl">
+            <Card className="backdrop-blur-sm bg-white/80 border-0 shadow-xl" data-section="appointment-booking">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center text-xl">
                   <Calendar className="w-5 h-5 mr-2 text-green-600" />
@@ -1003,7 +1098,7 @@ export default function PatientDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="grid md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         City *
@@ -1140,9 +1235,9 @@ export default function PatientDashboard() {
                       <p className="text-sm">Your prescriptions will appear here after doctor consultations</p>
                     </div>
                   ) : (
-                    medicalRecords.map((record) => (
+                    medicalRecords.map((record, index) => (
                       <div
-                        key={record.id}
+                        key={record.id || `record-${index}`}
                         className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
                       >
                         <div className="flex justify-between items-start mb-2">
@@ -1215,9 +1310,9 @@ export default function PatientDashboard() {
           </div>
 
           {/* Right Column - Sidebar */}
-          <div className="space-y-8">
+          <div className="space-y-4 lg:space-y-8">
             {/* AI Symptom Checker Card */}
-            <Card className="backdrop-blur-sm bg-white/80 border-0 shadow-xl">
+            <Card className="backdrop-blur-sm bg-white/80 border-0 shadow-xl" data-section="symptom-checker">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center text-xl">
                   <MessageCircle className="w-5 h-5 mr-2 text-indigo-600" />

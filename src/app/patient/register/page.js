@@ -72,6 +72,9 @@ export default function PatientRegistration() {
   const [currentStep, setCurrentStep] = useState(1)
   const [hospitals, setHospitals] = useState([])
   const [showCitySuggestions, setShowCitySuggestions] = useState(false)
+  const [hospitalCoordinates, setHospitalCoordinates] = useState(null)
+  const [loadingCoordinates, setLoadingCoordinates] = useState(false)
+  const [coordinatesError, setCoordinatesError] = useState("")
   
   const [filteredCities, setFilteredCities] = useState(["Delhi", "Mumbai", "Bangalore", "Chennai", "Kolkata", "Hyderabad", "Pune", "Ahmedabad", "Jaipur", "Lucknow", "Bhopal", "Indore", "Surat", "Kanpur", "Nagpur", "Visakhapatnam", "Patna", "Vadodara", "Ludhiana", "Coimbatore"])
 
@@ -85,31 +88,27 @@ export default function PatientRegistration() {
   }, [])
 
   
-  // Sample hospital data by city with Test Hospital always included
+  // Sample hospital data by city
   const hospitalsByCity = {
     "Bhopal": [
-      { id: "test-hospital", name: "Test Hospital", address: "Test Location (Always Available)", isTestHospital: true },
       { id: "1", name: "All India Institute of Medical Sciences (AIIMS)", address: "Saket Nagar, Bhopal" },
       { id: "2", name: "Hamidia Hospital", address: "Hamidia Road, Bhopal" },
       { id: "3", name: "People's Hospital", address: "Berasia Road, Bhopal" },
       { id: "4", name: "Bansal Hospital", address: "C-Sector, Shahpura, Bhopal" }
     ],
     "Delhi": [
-      { id: "test-hospital", name: "Test Hospital", address: "Test Location (Always Available)", isTestHospital: true },
       { id: "5", name: "All India Institute of Medical Sciences (AIIMS)", address: "Ansari Nagar, New Delhi" },
       { id: "6", name: "Safdarjung Hospital", address: "Safdarjung, New Delhi" },
       { id: "7", name: "Apollo Hospital", address: "Sarita Vihar, New Delhi" },
       { id: "8", name: "Fortis Hospital", address: "Shalimar Bagh, New Delhi" }
     ],
     "Mumbai": [
-      { id: "test-hospital", name: "Test Hospital", address: "Test Location (Always Available)", isTestHospital: true },
       { id: "9", name: "King Edward Memorial Hospital", address: "Parel, Mumbai" },
       { id: "10", name: "Tata Memorial Hospital", address: "Parel, Mumbai" },
       { id: "11", name: "Lilavati Hospital", address: "Bandra West, Mumbai" },
       { id: "12", name: "Hinduja Hospital", address: "Mahim, Mumbai" }
     ],
     "Indore": [
-      { id: "test-hospital", name: "Test Hospital", address: "Test Location (Always Available)", isTestHospital: true },
       { id: "13", name: "Maharaja Yeshwantrao Hospital", address: "M.G. Road, Indore" },
       { id: "14", name: "Apollo Hospital", address: "Vijay Nagar, Indore" },
       { id: "15", name: "Bombay Hospital", address: "Indore" },
@@ -117,21 +116,6 @@ export default function PatientRegistration() {
     ]
   }
   
-  // Add Test Hospital to any city
-  const addTestHospitalToCity = (cityName) => {
-    if (!hospitalsByCity[cityName]) {
-      hospitalsByCity[cityName] = []
-    }
-    // Only add if not already present
-    if (!hospitalsByCity[cityName].some(h => h.isTestHospital)) {
-      hospitalsByCity[cityName].unshift({
-        id: "test-hospital",
-        name: "Test Hospital",
-        address: "Test Location (Always Available)",
-        isTestHospital: true
-      })
-    }
-  }
 
   // Age calculation from DOB
   const calculateAge = (dob) => {
@@ -155,9 +139,6 @@ export default function PatientRegistration() {
 
   // Handle hospital city change
   const handleHospitalCityChange = (city) => {
-    // Add Test Hospital to any city
-    addTestHospitalToCity(city)
-    
     setFormData(prev => ({
       ...prev,
       hospitalCity: city,
@@ -166,6 +147,57 @@ export default function PatientRegistration() {
       preferredDoctor: ""
     }))
     setHospitals(hospitalsByCity[city] || [])
+    setHospitalCoordinates(null)
+    setCoordinatesError("")
+  }
+
+  // Get hospital coordinates using Google Places API
+  const getHospitalCoordinates = async (hospitalName, city) => {
+    if (!hospitalName || !city) return
+
+    setLoadingCoordinates(true)
+    setCoordinatesError("")
+    
+    try {
+      const response = await fetch(`/api/places?query=${encodeURIComponent(hospitalName + ' ' + city)}`)
+      const data = await response.json()
+      
+      if (data.success && data.hospitals.length > 0) {
+        // Find the best match for the hospital name
+        const bestMatch = data.hospitals.find(hospital => 
+          hospital.name.toLowerCase().includes(hospitalName.toLowerCase()) ||
+          hospitalName.toLowerCase().includes(hospital.name.toLowerCase())
+        ) || data.hospitals[0]
+        
+        setHospitalCoordinates({
+          lat: bestMatch.location.lat,
+          lng: bestMatch.location.lng
+        })
+        setCoordinatesError("")
+      } else {
+        setCoordinatesError("Could not find coordinates for this hospital. Please try a different hospital.")
+        setHospitalCoordinates(null)
+      }
+    } catch (error) {
+      console.error('Error fetching hospital coordinates:', error)
+      setCoordinatesError("Failed to get hospital location. Please try again.")
+      setHospitalCoordinates(null)
+    } finally {
+      setLoadingCoordinates(false)
+    }
+  }
+
+  // Handle hospital name change
+  const handleHospitalNameChange = (hospitalName) => {
+    setFormData(prev => ({
+      ...prev,
+      hospitalName: hospitalName
+    }))
+    
+    // Get coordinates for the selected hospital
+    if (hospitalName && formData.hospitalCity) {
+      getHospitalCoordinates(hospitalName, formData.hospitalCity)
+    }
   }
 
   // Handle input changes
@@ -243,6 +275,7 @@ export default function PatientRegistration() {
       const registrationData = {
         ...formData,
         patientId,
+        hospitalCoordinates: hospitalCoordinates,
         registrationDate: new Date().toISOString(),
         status: "Registered"
       }
@@ -711,7 +744,7 @@ export default function PatientRegistration() {
                   <select
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     value={formData.hospitalName}
-                    onChange={(e) => handleInputChange("hospitalName", e.target.value)}
+                    onChange={(e) => handleHospitalNameChange(e.target.value)}
                     required
                   >
                     <option value="">Select Hospital</option>
@@ -719,25 +752,41 @@ export default function PatientRegistration() {
                       <option 
                         key={hospital.id} 
                         value={hospital.name}
-                        style={hospital.isTestHospital ? { fontWeight: 'bold', color: '#059669' } : {}}
                       >
-                        {hospital.isTestHospital ? '🧪 ' : ''}{hospital.name} - {hospital.address}
+                        {hospital.name} - {hospital.address}
                       </option>
                     ))}
                   </select>
                   
-                  {/* Test Hospital Information */}
-                  {hospitals.some(h => h.isTestHospital) && (
-                    <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-                      <div className="flex items-start">
-                        <div className="text-green-600 mr-2">🧪</div>
-                        <div>
-                          <p className="text-sm font-medium text-green-800 mb-1">Test Hospital Available</p>
-                          <p className="text-xs text-green-700">
-                            Select "Test Hospital" for testing purposes. This hospital is always considered within 100m of your location for token generation.
-                          </p>
+                  {/* Hospital Coordinates Status */}
+                  {formData.hospitalName && (
+                    <div className="mt-2">
+                      {loadingCoordinates ? (
+                        <div className="flex items-center text-blue-600 text-sm">
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Getting hospital location...
                         </div>
-                      </div>
+                      ) : hospitalCoordinates ? (
+                        <div className="flex items-center text-green-600 text-sm">
+                          <CheckCircle className="w-4 h-4 mr-2" />
+                          Hospital location found: {hospitalCoordinates.lat.toFixed(6)}, {hospitalCoordinates.lng.toFixed(6)}
+                          {formData.hospitalName === "All India Institute of Medical Sciences (AIIMS)" && formData.hospitalCity === "Bhopal" && (
+                            <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                              Token always available
+                            </span>
+                          )}
+                        </div>
+                      ) : coordinatesError ? (
+                        <div className="flex items-center text-red-600 text-sm">
+                          <AlertCircle className="w-4 h-4 mr-2" />
+                          {coordinatesError}
+                        </div>
+                      ) : (
+                        <div className="flex items-center text-gray-500 text-sm">
+                          <MapPin className="w-4 h-4 mr-2" />
+                          Hospital location will be fetched automatically
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -872,7 +921,7 @@ export default function PatientRegistration() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 py-4 sm:py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Patient Registration</h1>
@@ -880,8 +929,8 @@ export default function PatientRegistration() {
         </div>
 
         {/* Progress Steps */}
-        <div className="mb-8">
-          <div className="flex items-center justify-center space-x-4">
+        <div className="mb-6 sm:mb-8">
+          <div className="flex items-center justify-center space-x-2 sm:space-x-4 overflow-x-auto">
             {[1, 2, 3, 4, 5].map((step) => (
               <div key={step} className="flex items-center">
                 <div
@@ -895,7 +944,7 @@ export default function PatientRegistration() {
                 </div>
                 {step < 5 && (
                   <div
-                    className={`w-16 h-1 mx-2 ${
+                    className={`w-8 sm:w-16 h-1 mx-1 sm:mx-2 ${
                       step < currentStep ? 'bg-blue-600' : 'bg-gray-200'
                     }`}
                   />

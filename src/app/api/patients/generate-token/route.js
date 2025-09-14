@@ -18,6 +18,8 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 export async function POST(request) {
   try {
     const { patientId, currentLat, currentLng } = await request.json();
+    console.log('Token generation request:', { patientId, currentLat, currentLng });
+    
     const client = await clientPromise;
     const db = client.db("hospital-management");
 
@@ -54,6 +56,8 @@ export async function POST(request) {
       patientId: patientId 
     });
 
+    console.log('Hospital location found:', hospitalLocation);
+
     if (!hospitalLocation) {
       return NextResponse.json({ 
         success: false, 
@@ -64,21 +68,29 @@ export async function POST(request) {
     let distance = 0;
     let isTestHospital = false;
 
-    // Check if this is Test Hospital (always within 100m for testing)
-    if (hospitalLocation.hospitalName === "Test Hospital") {
-      distance = 50; // Always set to 50m for Test Hospital
+    // Check if this is the Bhopal AIIMS hospital (always within 100m for testing)
+    if (hospitalLocation.hospitalName === "All India Institute of Medical Sciences (AIIMS)" && 
+        hospitalLocation.hospitalCity === "Bhopal") {
+      distance = 50; // Always set to 50m for Bhopal AIIMS
       isTestHospital = true;
     } else {
       // Calculate distance between patient's current location and hospital
-      distance = calculateDistance(
-        currentLat, 
-        currentLng, 
-        hospitalLocation.coordinates.lat, 
-        hospitalLocation.coordinates.lng
-      );
+      if (hospitalLocation.coordinates && hospitalLocation.coordinates.lat && hospitalLocation.coordinates.lng) {
+        distance = calculateDistance(
+          currentLat, 
+          currentLng, 
+          hospitalLocation.coordinates.lat, 
+          hospitalLocation.coordinates.lng
+        );
+      } else {
+        return NextResponse.json({ 
+          success: false, 
+          message: "Hospital coordinates not available for distance calculation" 
+        }, { status: 400 });
+      }
     }
 
-    // Check if patient is within 100 meters of hospital (skip for Test Hospital)
+    // Check if patient is within 100 meters of hospital (skip for Bhopal AIIMS)
     if (!isTestHospital && distance > 100) {
       return NextResponse.json({ 
         success: false, 
@@ -151,7 +163,7 @@ export async function POST(request) {
 
       return NextResponse.json({ 
         success: true, 
-        message: isTestHospital ? "Token generated successfully for Test Hospital" : "Token generated successfully",
+        message: isTestHospital ? "Token generated successfully for AIIMS Bhopal" : "Token generated successfully",
         token: {
           tokenNumber,
           patientName: patient.fullName,
