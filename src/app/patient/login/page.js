@@ -220,7 +220,7 @@ export default function PatientLoginPage() {
 
               <div className="text-center">
                 <p className="text-sm text-gray-500">
-                  Didn't receive OTP?{" "}
+                  Didn&apos;t receive OTP?{" "}
                   <button className="text-blue-600 hover:underline font-medium">
                     Resend OTP
                   </button>

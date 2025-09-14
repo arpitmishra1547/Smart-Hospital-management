@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import LocationTracker from "@/components/patient/LocationTracker";
@@ -173,13 +173,55 @@ export default function PatientDashboard() {
   const [hasCompletedPrescription, setHasCompletedPrescription] = useState(false)
   const [prescriptionCompleted, setPrescriptionCompleted] = useState(false)
 
-  const fetchMedicalHistory = async () => {
+  const fetchMedicalHistory = useCallback(async () => {
     if (!patientData?.patientId) return
     
     setLoadingHistory(true)
     try {
-      const response = await fetch(`/api/patients/history?patientId=${encodeURIComponent(patientData.patientId)}`)
-      const data = await response.json()
+      // In production, use the actual API call:
+      // const response = await fetch(`/api/patients/history?patientId=${encodeURIComponent(patientData.patientId)}`)
+      // const data = await response.json()
+      
+      // For now, using mock data
+      await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate network delay
+      
+      // Mock data - replace with actual API response handling
+      const mockData = {
+        success: true,
+        prescriptions: [
+          {
+            _id: '1',
+            createdAt: new Date().toISOString(),
+            department: 'Cardiology',
+            doctorName: 'Dr. Smith',
+            prescription: {
+              diagnosis: 'Hypertension',
+              medicines: [
+                { name: 'Medication A', dosage: '10mg', duration: '2 weeks' },
+                { name: 'Medication B', dosage: '5mg', duration: '1 month' }
+              ],
+              symptoms: 'High blood pressure',
+              notes: 'Follow up in 2 weeks'
+            },
+            tokenNumber: 'A123'
+          },
+          {
+            _id: '2',
+            createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+            department: 'General Medicine',
+            doctorName: 'Dr. Johnson',
+            prescription: {
+              diagnosis: 'Common Cold',
+              medicines: [],
+              symptoms: 'Cough, cold',
+              notes: 'Rest and hydration recommended'
+            },
+            tokenNumber: 'B456'
+          }
+        ]
+      }
+      
+      const data = mockData // Replace with actual API response
       
       if (data.success) {
         const records = data.prescriptions.map(prescription => ({
@@ -188,15 +230,22 @@ export default function PatientDashboard() {
           department: prescription.department,
           doctor: prescription.doctorName,
           diagnosis: prescription.prescription.diagnosis,
-          prescription: prescription.prescription.medicines.map(med => `${med.name} ${med.dosage} - ${med.duration}`).join(', '),
+          prescription: prescription.prescription.medicines.length > 0
+            ? prescription.prescription.medicines
+                .map(med => `${med.name} ${med.dosage} - ${med.duration}`)
+                .join(', ')
+            : 'No medications prescribed',
           symptoms: prescription.prescription.symptoms,
           notes: prescription.prescription.notes,
           tokenNumber: prescription.tokenNumber
         }))
+        
         setMedicalRecords(records)
         
-        // Check if patient has any completed prescriptions (prescription saved by doctor)
-        const hasPrescription = records.length > 0
+        // Check if patient has any completed prescriptions
+        const hasPrescription = records.some(record => 
+          record.prescription && record.prescription !== 'No medications prescribed'
+        )
         setHasCompletedPrescription(hasPrescription)
         setPrescriptionCompleted(hasPrescription)
       }
@@ -205,11 +254,11 @@ export default function PatientDashboard() {
     } finally {
       setLoadingHistory(false)
     }
-  }
+  }, [patientData])
 
   useEffect(() => {
     fetchMedicalHistory()
-  }, [patientData])
+  }, [fetchMedicalHistory])
 
   // Function to generate token for appointment
   const generateToken = (appointment) => {

@@ -23,6 +23,7 @@ import {
   X,
 } from "lucide-react"
 import { useState, useEffect } from "react"
+import Image from 'next/image'
 
 export default function SmartHospitalLandingPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -301,7 +302,7 @@ export default function SmartHospitalLandingPage() {
                 patients, doctors, and healthcare administrators.
               </p>
               <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-                With cutting-edge technology and compassionate care, we're building the future of healthcare where every
+                With cutting-edge technology and compassionate care, we&apos;re building the future of healthcare where every
                 interaction is meaningful, every process is streamlined, and every patient receives the attention they
                 deserve.
               </p>
@@ -320,11 +321,13 @@ export default function SmartHospitalLandingPage() {
                 </div>
               </div>
             </div>
-            <div className="animate-on-scroll opacity-0">
-              <img
+            <div className="animate-on-scroll opacity-0 relative w-full h-96">
+              <Image
                 src="/modern-hospital-with-doctors-and-patients.png"
                 alt="Modern hospital environment"
-                className="rounded-2xl shadow-2xl"
+                fill
+                className="rounded-2xl shadow-2xl object-cover"
+                priority
               />
             </div>
           </div>
@@ -350,11 +353,18 @@ export default function SmartHospitalLandingPage() {
                   ))}
                 </div>
                 <p className="text-gray-600 mb-6 italic">
-                  "The digital token system saved me hours of waiting. I could plan my day better and the whole
-                  experience was so smooth!"
+                  &quot;The digital token system saved me hours of waiting. I could plan my day better and the whole
+                  experience was so smooth!&quot;
                 </p>
                 <div className="flex items-center">
-                  <img src="/happy-female-patient.png" alt="Sarah Johnson" className="w-12 h-12 rounded-full mr-4" />
+                  <div className="relative w-12 h-12 rounded-full overflow-hidden mr-4">
+                    <Image
+                      src="/happy-female-patient.png"
+                      alt="Sarah Johnson"
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
                   <div>
                     <div className="font-semibold text-gray-900">Sarah Johnson</div>
                     <div className="text-gray-600 text-sm">Patient</div>
@@ -371,15 +381,18 @@ export default function SmartHospitalLandingPage() {
                   ))}
                 </div>
                 <p className="text-gray-600 mb-6 italic">
-                  "As a doctor, the digital records system helps me provide better care. All patient history is
-                  instantly accessible and secure."
+                  &quot;As a doctor, the digital records system helps me provide better care. All patient history is
+                  instantly accessible and secure.&quot;
                 </p>
                 <div className="flex items-center">
-                  <img
-                    src="/professional-male-doctor.png"
-                    alt="Dr. Michael Chen"
-                    className="w-12 h-12 rounded-full mr-4"
-                  />
+                  <div className="relative w-12 h-12 rounded-full overflow-hidden mr-4">
+                    <Image
+                      src="/professional-male-doctor.png"
+                      alt="Dr. Michael Chen"
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
                   <div>
                     <div className="font-semibold text-gray-900">Dr. Michael Chen</div>
                     <div className="text-gray-600 text-sm">Cardiologist</div>
@@ -396,15 +409,18 @@ export default function SmartHospitalLandingPage() {
                   ))}
                 </div>
                 <p className="text-gray-600 mb-6 italic">
-                  "The administrative dashboard gives us complete visibility into hospital operations. It's transformed
-                  how we manage resources."
+                  &quot;The administrative dashboard gives us complete visibility into hospital operations. It's transformed
+                  how we manage resources.&quot;
                 </p>
                 <div className="flex items-center">
-                  <img
-                    src="/professional-female-administrator.png"
-                    alt="Lisa Rodriguez"
-                    className="w-12 h-12 rounded-full mr-4"
-                  />
+                  <div className="relative w-12 h-12 rounded-full overflow-hidden mr-4">
+                    <Image
+                      src="/professional-female-administrator.png"
+                      alt="Lisa Rodriguez"
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
                   <div>
                     <div className="font-semibold text-gray-900">Lisa Rodriguez</div>
                     <div className="text-gray-600 text-sm">Hospital Administrator</div>
