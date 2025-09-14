@@ -1086,7 +1086,7 @@ export default function PatientDashboard() {
                   </div>
                   <div className="mt-4 text-center">
                     <p className="text-sm text-gray-600">
-                      💊 Don't forget to take your prescribed medications as directed
+                      💊 Don&apos;t forget to take your prescribed medications as directed
                     </p>
                   </div>
                 </CardContent>
@@ -1227,7 +1227,7 @@ export default function PatientDashboard() {
                         <option key="ent" value="ENT (Ear, Nose, Throat) – ear pain, throat infection, sinus">ENT (Ear, Nose, Throat) – ear pain, throat infection, sinus</option>
                         <option key="ophthalmology" value="Ophthalmology (Eye) – eye checkup, vision problems">Ophthalmology (Eye) – eye checkup, vision problems</option>
                         <option key="dermatology" value="Dermatology (Skin) – skin, hair, nail issues">Dermatology (Skin) – skin, hair, nail issues</option>
-                        <option key="gynecology" value="Gynecology & Obstetrics (Women's health) – pregnancy, periods, fertility">Gynecology & Obstetrics (Women's health) – pregnancy, periods, fertility</option>
+                        <option key="gynecology" value="Gynecology & Obstetrics (Women&apos;s health) – pregnancy, periods, fertility">Gynecology & Obstetrics (Women&apos;s health) – pregnancy, periods, fertility</option>
                         <option key="pediatrics" value="Pediatrics – child health, vaccinations">Pediatrics – child health, vaccinations</option>
                         <option key="psychiatry" value="Psychiatry – mental health, stress, depression">Psychiatry – mental health, stress, depression</option>
                         <option key="dentistry" value="Dentistry – teeth, gums, oral care">Dentistry – teeth, gums, oral care</option>
@@ -1639,7 +1639,7 @@ export default function PatientDashboard() {
                     <div className="text-center py-6 text-gray-500">
                       <Bell className="w-12 h-12 mx-auto mb-2 text-gray-300" />
                       <p>No notifications</p>
-                      <p className="text-sm">You're all caught up!</p>
+                      <p className="text-sm">You&apos;re all caught up!</p>
                     </div>
                   )}
                 </div>

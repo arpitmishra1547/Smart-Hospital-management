@@ -409,7 +409,7 @@ export default function SmartHospitalLandingPage() {
                   ))}
                 </div>
                 <p className="text-gray-600 mb-6 italic">
-                  &quot;The administrative dashboard gives us complete visibility into hospital operations. It's transformed
+                  &quot;The administrative dashboard gives us complete visibility into hospital operations. It&apos;s transformed
                   how we manage resources.&quot;
                 </p>
                 <div className="flex items-center">

@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState, useEffect } from "react"
+import { useMemo, useState, useEffect, useCallback } from "react"
 import dynamic from "next/dynamic"
 import Sidebar from "@/components/authority/Sidebar"
 import StatCard from "@/components/authority/StatCard"
@@ -71,7 +71,7 @@ function AuthorityDashboardPage() {
     'Pediatrics', 'Neurology', 'Gynecology', 'Psychiatry'
   ]
 
-  const fetchDoctors = async (department = "") => {
+  const fetchDoctors = useCallback(async (department = "") => {
     setLoading(true)
     try {
       const url = department ? `/api/doctors?department=${encodeURIComponent(department)}` : '/api/doctors'
@@ -85,9 +85,9 @@ function AuthorityDashboardPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  const fetchDepartments = async () => {
+  const fetchDepartments = useCallback(async () => {
     try {
       const response = await fetch('/api/departments')
       const data = await response.json()
@@ -97,9 +97,9 @@ function AuthorityDashboardPage() {
     } catch (error) {
       console.error('Failed to fetch departments:', error)
     }
-  }
+  }, [])
 
-  const fetchOpdRooms = async (departmentId = "") => {
+  const fetchOpdRooms = useCallback(async (departmentId = "") => {
     try {
       const url = departmentId ? `/api/opd-rooms?departmentId=${encodeURIComponent(departmentId)}` : '/api/opd-rooms'
       const response = await fetch(url)
@@ -110,9 +110,9 @@ function AuthorityDashboardPage() {
     } catch (error) {
       console.error('Failed to fetch OPD rooms:', error)
     }
-  }
+  }, [])
 
-  const fetchSchedules = async (date = selectedDate) => {
+  const fetchSchedules = useCallback(async (date = selectedDate) => {
     try {
       const url = `/api/schedules?date=${date}`
       const response = await fetch(url)
@@ -123,9 +123,9 @@ function AuthorityDashboardPage() {
     } catch (error) {
       console.error('Failed to fetch schedules:', error)
     }
-  }
+  }, [selectedDate])
 
-  const fetchAllPatients = async () => {
+  const fetchAllPatients = useCallback(async () => {
     setLoading(true)
     try {
       const response = await fetch('/api/patients')
@@ -138,9 +138,9 @@ function AuthorityDashboardPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  const fetchPatientHistory = async (patientId) => {
+  const fetchPatientHistory = useCallback(async (patientId) => {
     setLoading(true)
     try {
       const response = await fetch(`/api/patients/history?patientId=${patientId}`)
@@ -153,7 +153,7 @@ function AuthorityDashboardPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   const addDoctor = async () => {
     if (!newDoctor.name || !newDoctor.department) {
@@ -495,13 +495,13 @@ function AuthorityDashboardPage() {
         fetchAllPatients()
       }
     }
-  }, [selectedDepartment, activeTab, isClient])
+  }, [selectedDepartment, activeTab, isClient, fetchDoctors, fetchSchedules, fetchAllPatients, selectedDate])
 
   useEffect(() => {
     if (isClient && selectedDate) {
       fetchSchedules(selectedDate)
     }
-  }, [selectedDate, isClient])
+  }, [selectedDate, isClient, fetchSchedules])
 
   const doctorBySpecialization = useMemo(() => {
     const deptCounts = doctors.reduce((acc, doctor) => {
