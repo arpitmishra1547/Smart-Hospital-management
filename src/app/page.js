@@ -168,7 +168,7 @@ export default function SmartHospitalLandingPage() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2">
               <Activity className="w-8 h-8 text-blue-600" />
-              <h1 className="text-xl font-bold text-gray-900">Health-Hive</h1>
+              <h1 className="text-xl font-bold text-gray-900">OPDEx</h1>
             </div>
 
             {/* Desktop Navigation */}
